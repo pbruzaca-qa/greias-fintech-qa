@@ -1,5 +1,7 @@
 import {
   AccountSnapshot,
+  CardActionSuccessResponse,
+  CardCredentialsPayload,
   ChaosConfig,
   DigitalAccount,
   GreiasCard,
@@ -15,13 +17,20 @@ export const PER_TX_LIMIT_CENTS = 500_000; // $5,000.00
 export const DAILY_LIMIT_CENTS = 1_000_000; // $10,000.00
 export const WIRE_FEE_CENTS = 250; // $2.50
 
+interface CardSecretRecord {
+  fullPan: string;
+  cvv: string;
+}
+
 interface GreiasMemoryStore {
   activeAccountId: string;
   accounts: Record<string, DigitalAccount>;
   cardsByAccountId: Record<string, GreiasCard>;
+  cardSecretsByAccountId: Record<string, CardSecretRecord>;
   ledgerByAccountId: Record<string, LedgerEntry[]>;
   idempotencyCache: Record<string, AccountSnapshot>;
   transferIdempotencyCache: Record<string, TransferSuccessResponse>;
+  cardActionIdempotencyCache: Record<string, CardActionSuccessResponse>;
   chaos: ChaosConfig;
 }
 
@@ -93,9 +102,16 @@ function createSeedState(): GreiasMemoryStore {
     activeAccountId: DEFAULT_ACCOUNT_ID,
     accounts: { [DEFAULT_ACCOUNT_ID]: seedAccount },
     cardsByAccountId: { [DEFAULT_ACCOUNT_ID]: seedCard },
+    cardSecretsByAccountId: {
+      [DEFAULT_ACCOUNT_ID]: {
+        fullPan: "5489 3201 9940 4821",
+        cvv: "842",
+      },
+    },
     ledgerByAccountId: { [DEFAULT_ACCOUNT_ID]: seedEntries },
     idempotencyCache: {},
     transferIdempotencyCache: {},
+    cardActionIdempotencyCache: {},
     chaos: {
       enabled: false,
       latencyMs: 0,
@@ -262,6 +278,9 @@ export function createDigitalAccount(params: {
     currentInvoiceCents: 0,
   };
 
+  const fullPan = `5489 3201 ${String(9940 + accountCount).slice(-4)} ${cardLast4}`;
+  const cvv = String(217 + accountCount * 17).slice(-3);
+
   const entries: LedgerEntry[] =
     params.initialDepositCents > 0
       ? [
@@ -280,6 +299,7 @@ export function createDigitalAccount(params: {
 
   store.accounts[accountId] = newAccount;
   store.cardsByAccountId[accountId] = newCard;
+  store.cardSecretsByAccountId[accountId] = { fullPan, cvv };
   store.ledgerByAccountId[accountId] = entries;
   store.activeAccountId = accountId;
 
@@ -324,7 +344,6 @@ export function executePixTransfer(params: {
   const todayPrefix = new Date().toISOString().slice(0, 10);
   const limits = computeDailyLimits(entries, todayPrefix);
 
-  // Self-transfer check
   const normalizedKey = params.pixKey.trim().toLowerCase();
   if (
     params.keyType === "EMAIL" &&
@@ -349,7 +368,6 @@ export function executePixTransfer(params: {
     };
   }
 
-  // Limits check
   if (params.amountCents > limits.perTxLimitCents) {
     return {
       ok: false,
@@ -367,7 +385,6 @@ export function executePixTransfer(params: {
     };
   }
 
-  // Balance check
   if (params.amountCents > account.balanceCents) {
     return {
       ok: false,
@@ -377,7 +394,6 @@ export function executePixTransfer(params: {
     };
   }
 
-  // Commit debit atomically
   const newBalance = account.balanceCents - params.amountCents;
   account.balanceCents = newBalance;
 
@@ -463,7 +479,6 @@ export function executeWireTransfer(params: {
   const todayPrefix = new Date().toISOString().slice(0, 10);
   const limits = computeDailyLimits(entries, todayPrefix);
 
-  // Self-transfer check (same branch & account number)
   const normBranch = params.branchCode.replace(/\D/g, "");
   const normSelfBranch = account.branchCode.replace(/\D/g, "");
   const normAcct = params.accountNumber.replace(/\D/g, "");
@@ -477,7 +492,6 @@ export function executeWireTransfer(params: {
     };
   }
 
-  // Limits check (principal amount)
   if (params.amountCents > limits.perTxLimitCents) {
     return {
       ok: false,
@@ -495,7 +509,6 @@ export function executeWireTransfer(params: {
     };
   }
 
-  // Balance check including $2.50 Wire fee
   const totalDebit = params.amountCents + WIRE_FEE_CENTS;
   if (totalDebit > account.balanceCents) {
     return {
@@ -507,7 +520,6 @@ export function executeWireTransfer(params: {
     };
   }
 
-  // Commit debit atomically
   const newBalance = account.balanceCents - totalDebit;
   account.balanceCents = newBalance;
 
@@ -554,6 +566,239 @@ export function executeWireTransfer(params: {
 
   if (params.idempotencyKey) {
     store.transferIdempotencyCache[params.idempotencyKey] = responseData;
+  }
+
+  return { ok: true, data: responseData };
+}
+
+/* ============================
+   BLOCK 3 — SMART CARD CONTROL
+   ============================ */
+
+export function getActiveCardCredentials(): CardCredentialsPayload {
+  const store = getStore();
+  const account =
+    store.accounts[store.activeAccountId] ?? store.accounts[DEFAULT_ACCOUNT_ID];
+  const card = store.cardsByAccountId[account.id];
+  const secret = store.cardSecretsByAccountId[account.id];
+
+  return {
+    cardId: card.id,
+    holderName: card.holderName,
+    pan: secret.fullPan,
+    last4: card.last4,
+    validThru: card.validThru,
+    cvv: secret.cvv,
+  };
+}
+
+export function setCardStatus(status: "ACTIVE" | "FROZEN"): AccountSnapshot {
+  const store = getStore();
+  const account =
+    store.accounts[store.activeAccountId] ?? store.accounts[DEFAULT_ACCOUNT_ID];
+  const card = store.cardsByAccountId[account.id];
+  card.status = status;
+  return getActiveSnapshot();
+}
+
+export function setCardInvoiceLimit(newLimitCents: number): AccountSnapshot {
+  const store = getStore();
+  const account =
+    store.accounts[store.activeAccountId] ?? store.accounts[DEFAULT_ACCOUNT_ID];
+  const card = store.cardsByAccountId[account.id];
+  card.invoiceLimitCents = newLimitCents;
+  return getActiveSnapshot();
+}
+
+export type CardActionDomainResult =
+  | { ok: true; data: CardActionSuccessResponse }
+  | {
+      ok: false;
+      status: number;
+      code: string;
+      message: string;
+      snapshot?: AccountSnapshot;
+    };
+
+export function executeCardPurchase(params: {
+  merchantName: string;
+  amountCents: number;
+  idempotencyKey?: string | null;
+}): CardActionDomainResult {
+  const store = getStore();
+
+  if (
+    params.idempotencyKey &&
+    store.cardActionIdempotencyCache[params.idempotencyKey]
+  ) {
+    return {
+      ok: true,
+      data: {
+        ...store.cardActionIdempotencyCache[params.idempotencyKey],
+        idempotentReplay: true,
+      },
+    };
+  }
+
+  const account =
+    store.accounts[store.activeAccountId] ?? store.accounts[DEFAULT_ACCOUNT_ID];
+  const card = store.cardsByAccountId[account.id];
+  const entries = store.ledgerByAccountId[account.id] ?? [];
+  const nowIso = new Date().toISOString();
+  const cleanMerchant = params.merchantName.trim();
+
+  if (card.status === "FROZEN") {
+    const declinedEntry: LedgerEntry = {
+      id: `CARD-DEC-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+      accountId: account.id,
+      type: "CARD_PURCHASE",
+      description: `${cleanMerchant} — Declined (Card Frozen)`,
+      amountCents: -params.amountCents,
+      balanceAfterCents: account.balanceCents,
+      recipientName: cleanMerchant,
+      recipientTarget: `Card •••• ${card.last4}`,
+      status: "DECLINED",
+      createdAt: nowIso,
+    };
+    store.ledgerByAccountId[account.id] = [declinedEntry, ...entries];
+
+    return {
+      ok: false,
+      status: 422,
+      code: "CARD_FROZEN",
+      message:
+        "Purchase declined because the card is currently frozen. Unfreeze the card to authorize purchases.",
+      snapshot: getActiveSnapshot(),
+    };
+  }
+
+  const availableInvoiceCents = Math.max(
+    0,
+    card.invoiceLimitCents - card.currentInvoiceCents
+  );
+
+  if (params.amountCents > availableInvoiceCents) {
+    const declinedEntry: LedgerEntry = {
+      id: `CARD-DEC-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+      accountId: account.id,
+      type: "CARD_PURCHASE",
+      description: `${cleanMerchant} — Declined (Invoice Limit Exceeded)`,
+      amountCents: -params.amountCents,
+      balanceAfterCents: account.balanceCents,
+      recipientName: cleanMerchant,
+      recipientTarget: `Card •••• ${card.last4}`,
+      status: "DECLINED",
+      createdAt: nowIso,
+    };
+    store.ledgerByAccountId[account.id] = [declinedEntry, ...entries];
+
+    return {
+      ok: false,
+      status: 422,
+      code: "INVOICE_LIMIT_EXCEEDED",
+      message:
+        "Purchase declined because it exceeds your available card invoice limit.",
+      snapshot: getActiveSnapshot(),
+    };
+  }
+
+  card.currentInvoiceCents += params.amountCents;
+
+  const completedEntry: LedgerEntry = {
+    id: `CARD-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+    accountId: account.id,
+    type: "CARD_PURCHASE",
+    description: `${cleanMerchant} (Card •••• ${card.last4})`,
+    amountCents: -params.amountCents,
+    balanceAfterCents: account.balanceCents,
+    recipientName: cleanMerchant,
+    recipientTarget: `Card •••• ${card.last4}`,
+    status: "COMPLETED",
+    createdAt: nowIso,
+  };
+
+  store.ledgerByAccountId[account.id] = [completedEntry, ...entries];
+
+  const responseData: CardActionSuccessResponse = {
+    entry: completedEntry,
+    snapshot: getActiveSnapshot(),
+  };
+
+  if (params.idempotencyKey) {
+    store.cardActionIdempotencyCache[params.idempotencyKey] = responseData;
+  }
+
+  return { ok: true, data: responseData };
+}
+
+export function payCurrentCardInvoice(params?: {
+  idempotencyKey?: string | null;
+}): CardActionDomainResult {
+  const store = getStore();
+
+  if (
+    params?.idempotencyKey &&
+    store.cardActionIdempotencyCache[params.idempotencyKey]
+  ) {
+    return {
+      ok: true,
+      data: {
+        ...store.cardActionIdempotencyCache[params.idempotencyKey],
+        idempotentReplay: true,
+      },
+    };
+  }
+
+  const account =
+    store.accounts[store.activeAccountId] ?? store.accounts[DEFAULT_ACCOUNT_ID];
+  const card = store.cardsByAccountId[account.id];
+  const entries = store.ledgerByAccountId[account.id] ?? [];
+
+  if (card.currentInvoiceCents <= 0) {
+    return {
+      ok: false,
+      status: 422,
+      code: "NO_INVOICE_DUE",
+      message: "Current card invoice is already $0.00.",
+    };
+  }
+
+  if (account.balanceCents < card.currentInvoiceCents) {
+    return {
+      ok: false,
+      status: 422,
+      code: "INSUFFICIENT_FUNDS",
+      message:
+        "Insufficient checking balance to pay the current card invoice.",
+    };
+  }
+
+  const paidCents = card.currentInvoiceCents;
+  account.balanceCents -= paidCents;
+  card.currentInvoiceCents = 0;
+
+  const nowIso = new Date().toISOString();
+  const paymentEntry: LedgerEntry = {
+    id: `INV-PAY-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+    accountId: account.id,
+    type: "INVOICE_PAYMENT",
+    description: `Card Invoice Payment (•••• ${card.last4})`,
+    amountCents: -paidCents,
+    balanceAfterCents: account.balanceCents,
+    status: "COMPLETED",
+    createdAt: nowIso,
+  };
+
+  store.ledgerByAccountId[account.id] = [paymentEntry, ...entries];
+
+  const responseData: CardActionSuccessResponse = {
+    paidCents,
+    entry: paymentEntry,
+    snapshot: getActiveSnapshot(),
+  };
+
+  if (params?.idempotencyKey) {
+    store.cardActionIdempotencyCache[params.idempotencyKey] = responseData;
   }
 
   return { ok: true, data: responseData };

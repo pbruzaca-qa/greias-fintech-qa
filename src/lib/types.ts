@@ -26,15 +26,29 @@ export interface GreiasCard {
   currentInvoiceCents: number;
 }
 
-export type LedgerEntryType = "DEPOSIT" | "PIX_OUT" | "WIRE_OUT" | "CARD_PURCHASE";
+export interface CardCredentialsPayload {
+  cardId: string;
+  holderName: string;
+  pan: string;
+  last4: string;
+  validThru: string;
+  cvv: string;
+}
+
+export type LedgerEntryType =
+  | "DEPOSIT"
+  | "PIX_OUT"
+  | "WIRE_OUT"
+  | "CARD_PURCHASE"
+  | "INVOICE_PAYMENT";
 
 export interface LedgerEntry {
   id: string;
   accountId: string;
   type: LedgerEntryType;
   description: string;
-  amountCents: number; // positive credit, negative debit (principal)
-  feeCents?: number; // positive fee charged alongside debit
+  amountCents: number;
+  feeCents?: number;
   balanceAfterCents?: number;
   recipientName?: string;
   recipientTarget?: string;
@@ -86,11 +100,19 @@ export interface TransferSuccessResponse {
   idempotentReplay?: boolean;
 }
 
+export interface CardActionSuccessResponse {
+  entry?: LedgerEntry;
+  paidCents?: number;
+  snapshot: AccountSnapshot;
+  idempotentReplay?: boolean;
+}
+
 export interface ApiErrorPayload {
   error: {
     code: string;
     message: string;
     details?: Record<string, string>;
     chaosInjected?: boolean;
+    snapshot?: AccountSnapshot;
   };
 }

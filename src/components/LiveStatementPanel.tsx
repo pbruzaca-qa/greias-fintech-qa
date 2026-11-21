@@ -44,9 +44,17 @@ export function LiveStatementPanel() {
     }
   }, []);
 
+  const latestEntryId = snapshot?.recentEntries[0]?.id ?? "";
+
   useEffect(() => {
     void loadStatement();
-  }, [loadStatement, snapshot?.account.balanceCents, snapshot?.account.id]);
+  }, [
+    loadStatement,
+    snapshot?.account.balanceCents,
+    snapshot?.account.id,
+    snapshot?.card.currentInvoiceCents,
+    latestEntryId,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -71,7 +79,7 @@ export function LiveStatementPanel() {
             data-testid="refresh-statement-btn"
             className="border border-graphite-700 bg-obsidian-950 px-4 py-2 font-mono text-xs text-ivory hover:border-graphite-600 disabled:opacity-60"
           >
-            {isLoading ? "Syncing..." : "Refresh Ledger"}
+            <span>{isLoading ? "Syncing..." : "Refresh Ledger"}</span>
           </button>
         </div>
       </div>
@@ -82,7 +90,7 @@ export function LiveStatementPanel() {
           data-testid="statement-error"
           className="border border-terracotta bg-terracotta/10 px-4 py-3 font-mono text-xs text-terracotta"
         >
-          {errorMsg}
+          <span>{errorMsg}</span>
         </div>
       )}
 
@@ -149,15 +157,18 @@ export function LiveStatementPanel() {
                     <td className="whitespace-nowrap px-5 py-3.5 text-right font-mono">
                       <span
                         className={
-                          entry.amountCents >= 0 ? "text-sage" : "text-ivory"
+                          entry.status !== "COMPLETED"
+                            ? "text-ash line-through"
+                            : entry.amountCents >= 0
+                              ? "text-sage"
+                              : "text-ivory"
                         }
                       >
-                        {entry.amountCents >= 0 ? "+" : ""}
-                        {formatCents(entry.amountCents)}
+                        {`${entry.amountCents >= 0 ? "+" : ""}${formatCents(entry.amountCents)}`}
                       </span>
                       {entry.feeCents && entry.feeCents > 0 ? (
                         <div className="text-[10px] text-ash">
-                          Fee: -{formatCents(entry.feeCents)}
+                          {`Fee: -${formatCents(entry.feeCents)}`}
                         </div>
                       ) : null}
                     </td>

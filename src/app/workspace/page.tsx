@@ -7,6 +7,7 @@ import { useEnvironment } from "@/components/EnvironmentProvider";
 import { GreiasCardVisual } from "@/components/GreiasCardVisual";
 import { InstantTransfersPanel } from "@/components/InstantTransfersPanel";
 import { LiveStatementPanel } from "@/components/LiveStatementPanel";
+import { SmartCardControlPanel } from "@/components/SmartCardControlPanel";
 import { formatCents } from "@/lib/validation";
 
 type WorkspaceTab = "overview" | "transfers" | "card" | "statement";
@@ -93,8 +94,7 @@ function WorkspaceContent() {
             {account.fullName}
           </h1>
           <p className="mt-1 font-mono text-xs text-stone">
-            Branch {account.branchCode} • Account {account.accountNumber} •{" "}
-            {account.email}
+            {`Branch ${account.branchCode} • Account ${account.accountNumber} • ${account.email}`}
           </p>
         </div>
 
@@ -107,8 +107,7 @@ function WorkspaceContent() {
               data-testid="workspace-daily-remaining"
               className="mt-1 font-mono text-sm text-stone"
             >
-              {formatCents(limits.dailyRemainingCents)} left of{" "}
-              {formatCents(limits.dailyLimitCents)}
+              {`${formatCents(limits.dailyRemainingCents)} left of ${formatCents(limits.dailyLimitCents)}`}
             </p>
             <div className="mt-1.5 h-1 w-40 bg-charcoal-800">
               <div
@@ -148,7 +147,7 @@ function WorkspaceContent() {
                 : "border-graphite-700 bg-obsidian-900 text-stone hover:border-graphite-600 hover:text-ivory"
             }`}
           >
-            Overview
+            <span>Overview</span>
           </button>
 
           <button
@@ -164,7 +163,7 @@ function WorkspaceContent() {
             <span className={activeTab === "transfers" ? "mr-1.5" : "mr-1.5 text-sage"}>
               01
             </span>
-            Instant Transfers
+            <span>Instant Transfers</span>
           </button>
 
           <button
@@ -180,7 +179,7 @@ function WorkspaceContent() {
             <span className={activeTab === "card" ? "mr-1.5" : "mr-1.5 text-sage"}>
               02
             </span>
-            Smart Card
+            <span>Smart Card</span>
           </button>
 
           <button
@@ -196,7 +195,7 @@ function WorkspaceContent() {
             <span className={activeTab === "statement" ? "mr-1.5" : "mr-1.5 text-sage"}>
               03
             </span>
-            Live Statement
+            <span>Live Statement</span>
           </button>
         </div>
 
@@ -210,15 +209,18 @@ function WorkspaceContent() {
 
       {/* TAB CONTENT */}
       {activeTab === "overview" && (
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          {/* Card Column */}
+        <div key="tab-overview" className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           <div className="space-y-4 lg:col-span-5">
             <div className="flex items-center justify-between">
               <h2 className="font-mono text-xs tracking-[0.22em] text-stone uppercase">
                 GREIAS CARD
               </h2>
-              <span className="font-mono text-[11px] text-sage">
-                STATUS: {card.status}
+              <span
+                className={`font-mono text-[11px] ${
+                  card.status === "ACTIVE" ? "text-sage" : "text-terracotta"
+                }`}
+              >
+                {`STATUS: ${card.status}`}
               </span>
             </div>
 
@@ -246,7 +248,6 @@ function WorkspaceContent() {
             </div>
           </div>
 
-          {/* Actions + Recent Ledger */}
           <div className="space-y-6 lg:col-span-7">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <button
@@ -278,8 +279,8 @@ function WorkspaceContent() {
                 <p className="mt-1 text-xs text-stone">
                   Freeze, reveal PAN/CVV & test purchase limits.
                 </p>
-                <p className="mt-3 font-mono text-[10px] tracking-wider text-ash uppercase">
-                  PLANNED — BLOCK 3
+                <p className="mt-3 font-mono text-[10px] tracking-wider text-sage uppercase">
+                  OPEN MODULE →
                 </p>
               </button>
 
@@ -332,22 +333,24 @@ function WorkspaceContent() {
                       <div>
                         <p className="text-sm text-ivory">{entry.description}</p>
                         <p className="font-mono text-[10px] text-ash uppercase">
-                          {entry.type} • {entry.status} •{" "}
-                          {entry.createdAt.slice(0, 10)}
+                          {`${entry.type} • ${entry.status} • ${entry.createdAt.slice(0, 10)}`}
                         </p>
                       </div>
                       <div className="text-right font-mono">
                         <span
                           className={`text-sm ${
-                            entry.amountCents >= 0 ? "text-sage" : "text-ivory"
+                            entry.status !== "COMPLETED"
+                              ? "text-ash line-through"
+                              : entry.amountCents >= 0
+                                ? "text-sage"
+                                : "text-ivory"
                           }`}
                         >
-                          {entry.amountCents >= 0 ? "+" : ""}
-                          {formatCents(entry.amountCents)}
+                          {`${entry.amountCents >= 0 ? "+" : ""}${formatCents(entry.amountCents)}`}
                         </span>
                         {entry.feeCents && entry.feeCents > 0 ? (
                           <p className="text-[10px] text-ash">
-                            Fee: -{formatCents(entry.feeCents)}
+                            {`Fee: -${formatCents(entry.feeCents)}`}
                           </p>
                         ) : null}
                       </div>
@@ -362,56 +365,19 @@ function WorkspaceContent() {
 
       {activeTab === "transfers" && (
         <InstantTransfersPanel
+          key="tab-transfers"
           onViewStatement={() => selectTab("statement")}
         />
       )}
 
       {activeTab === "card" && (
-        <div className="grid grid-cols-1 gap-8 border border-graphite-700 bg-obsidian-900 p-6 sm:p-8 lg:grid-cols-12">
-          <div className="lg:col-span-5">
-            <GreiasCardVisual
-              holderName={card.holderName}
-              last4={card.last4}
-              validThru={card.validThru}
-              status={card.status}
-              variant="compact"
-            />
-          </div>
-          <div className="flex flex-col justify-between space-y-4 lg:col-span-7">
-            <div className="space-y-3">
-              <p className="font-mono text-[10px] tracking-[0.26em] text-ash uppercase">
-                MODULE 02 // SCHEDULED FOR BLOCK 3
-              </p>
-              <h2 className="font-serif text-2xl text-ivory">
-                Smart Card Control
-              </h2>
-              <p className="text-sm leading-relaxed text-stone">
-                Interactive freeze/unfreeze controls, full PAN & CVV reveal,
-                invoice limit adjustments, and a simulated card checkout
-                verifier will be delivered in Block 3.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => selectTab("transfers")}
-                className="border border-ivory bg-ivory px-5 py-2 font-serif text-xs font-medium text-obsidian-900 hover:bg-fillet"
-              >
-                Go to Instant Transfers →
-              </button>
-              <button
-                type="button"
-                onClick={() => selectTab("statement")}
-                className="border border-graphite-700 px-5 py-2 font-serif text-xs text-ivory hover:border-graphite-600"
-              >
-                View Live Statement
-              </button>
-            </div>
-          </div>
-        </div>
+        <SmartCardControlPanel
+          key="tab-card"
+          onViewStatement={() => selectTab("statement")}
+        />
       )}
 
-      {activeTab === "statement" && <LiveStatementPanel />}
+      {activeTab === "statement" && <LiveStatementPanel key="tab-statement" />}
     </div>
   );
 }

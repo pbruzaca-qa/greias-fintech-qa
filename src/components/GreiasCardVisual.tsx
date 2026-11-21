@@ -7,6 +7,9 @@ interface GreiasCardVisualProps {
   validThru?: string;
   variant?: "hero" | "compact";
   status?: "ACTIVE" | "FROZEN";
+  revealedPan?: string | null;
+  revealedCvv?: string | null;
+  showCvvSlot?: boolean;
 }
 
 export function GreiasCardVisual({
@@ -15,6 +18,9 @@ export function GreiasCardVisual({
   validThru = "08/30",
   variant = "hero",
   status = "ACTIVE",
+  revealedPan = null,
+  revealedCvv = null,
+  showCvvSlot = false,
 }: GreiasCardVisualProps) {
   const isHero = variant === "hero";
 
@@ -22,7 +28,6 @@ export function GreiasCardVisual({
     <div className="relative select-none">
       {isHero && (
         <>
-          {/* Faint lunar halo behind card */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -top-12 right-8 h-56 w-56 rounded-full opacity-25 blur-sm"
@@ -31,7 +36,6 @@ export function GreiasCardVisual({
                 "radial-gradient(circle at 35% 35%, rgba(216,212,204,0.22) 0%, rgba(30,30,30,0.4) 55%, transparent 72%)",
             }}
           />
-          {/* Chiseled mineral plinth */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -bottom-7 left-1/2 h-16 w-[92%] -translate-x-1/2 rounded-sm border-t border-graphite-700/70 bg-gradient-to-b from-charcoal-800/80 via-obsidian-900 to-obsidian-950 shadow-[0_-10px_40px_rgba(0,0,0,0.9)]"
@@ -39,7 +43,6 @@ export function GreiasCardVisual({
         </>
       )}
 
-      {/* Metallic Card Body */}
       <div
         data-testid="greias-card-visual"
         className={`relative overflow-hidden rounded-xl border border-silver/30 greias-brushed-metal shadow-[0_28px_70px_rgba(0,0,0,0.9)] transition-transform duration-500 ${
@@ -48,22 +51,22 @@ export function GreiasCardVisual({
             : "aspect-[1.586/1] w-full max-w-[380px] p-5 sm:p-6"
         }`}
       >
-        {/* Top metallic fillet highlight */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 rounded-xl border border-fillet/20"
         />
 
-        {/* Frozen overlay */}
         {status === "FROZEN" && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-obsidian-950/75 backdrop-blur-[1px]">
+          <div
+            data-testid="card-frozen-overlay"
+            className="absolute inset-0 z-20 flex items-center justify-center bg-obsidian-950/75 backdrop-blur-[1px]"
+          >
             <span className="border border-graphite-600 bg-charcoal-850 px-3 py-1 font-mono text-xs tracking-[0.25em] text-stone uppercase">
               CARD FROZEN
             </span>
           </div>
         )}
 
-        {/* Perseus Constellation SVG overlay on right */}
         <svg
           viewBox="0 0 220 180"
           fill="none"
@@ -104,9 +107,7 @@ export function GreiasCardVisual({
           <circle cx="122" cy="144" r="0.7" fill="#73706A" />
         </svg>
 
-        {/* Card Content */}
         <div className="relative z-10 flex h-full flex-col justify-between">
-          {/* Header Row */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <EyeLogo className="h-6 w-6 sm:h-7 sm:w-7" />
@@ -119,7 +120,6 @@ export function GreiasCardVisual({
             </span>
           </div>
 
-          {/* Chip + Contactless */}
           <div className="my-auto flex items-center gap-3.5 pt-2">
             <div
               aria-hidden="true"
@@ -158,11 +158,13 @@ export function GreiasCardVisual({
             </svg>
           </div>
 
-          {/* Footer Row */}
           <div className="flex items-end justify-between">
             <div className="space-y-1.5">
-              <p className="font-mono text-xs tracking-[0.22em] text-ivory/90 sm:text-sm">
-                •••• •••• •••• {last4}
+              <p
+                data-testid="card-pan-display"
+                className="font-mono text-xs tracking-[0.2em] text-ivory/90 sm:text-sm"
+              >
+                {revealedPan ?? `•••• •••• •••• ${last4}`}
               </p>
               <div className="space-y-0.5">
                 <p
@@ -171,9 +173,20 @@ export function GreiasCardVisual({
                 >
                   {holderName}
                 </p>
-                <p className="font-mono text-[9px] tracking-[0.18em] text-ash uppercase">
-                  VALID THRU <span className="ml-1.5 text-stone">{validThru}</span>
-                </p>
+                <div className="flex items-center gap-4 font-mono text-[9px] tracking-[0.18em] text-ash uppercase">
+                  <span>
+                    VALID THRU{" "}
+                    <span className="ml-1 text-stone">{validThru}</span>
+                  </span>
+                  {showCvvSlot && (
+                    <span data-testid="card-cvv-display">
+                      CVV{" "}
+                      <span className="ml-1 text-stone">
+                        {revealedCvv ?? "•••"}
+                      </span>
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>

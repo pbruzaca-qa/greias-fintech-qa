@@ -26,6 +26,11 @@ export interface WireTransferInput {
   memo?: string;
 }
 
+export interface CardPurchaseInput {
+  merchantName: string;
+  amountInput: string;
+}
+
 export interface ValidationResult {
   valid: boolean;
   errors: Record<string, string>;
@@ -36,6 +41,12 @@ export interface TransferValidationResult {
   valid: boolean;
   errors: Record<string, string>;
   parsedAmountCents: number;
+}
+
+export interface CardLimitValidationResult {
+  valid: boolean;
+  errors: Record<string, string>;
+  parsedLimitCents: number;
 }
 
 export function formatCents(cents: number): string {
@@ -258,6 +269,59 @@ export function validateWireTransferInput(
 
   if (input.memo && input.memo.trim().length > 140) {
     errors.memo = "Memo must not exceed 140 characters.";
+  }
+
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors,
+    parsedAmountCents: parsedCents ?? 0,
+  };
+}
+
+export function validateInvoiceLimitInput(
+  limitInput: string
+): CardLimitValidationResult {
+  const errors: Record<string, string> = {};
+  const trimmed = limitInput.trim();
+  const parsedCents =
+    trimmed === "" ? null : parseDollarInputToCents(trimmed);
+
+  if (parsedCents === null) {
+    errors.invoiceLimitInput =
+      "Enter a valid limit with up to 2 decimal places (e.g., 5000.00).";
+  } else if (parsedCents < 10_000) {
+    errors.invoiceLimitInput = "Invoice limit cannot be lower than $100.00.";
+  } else if (parsedCents > 2_500_000) {
+    errors.invoiceLimitInput = "Invoice limit cannot exceed $25,000.00.";
+  }
+
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors,
+    parsedLimitCents: parsedCents ?? 0,
+  };
+}
+
+export function validateCardPurchaseInput(
+  input: CardPurchaseInput
+): TransferValidationResult {
+  const errors: Record<string, string> = {};
+
+  const merchant = input.merchantName.trim();
+  if (merchant.length < 2) {
+    errors.merchantName = "Merchant name must contain at least 2 characters.";
+  } else if (merchant.length > 80) {
+    errors.merchantName = "Merchant name must not exceed 80 characters.";
+  }
+
+  const trimmedAmount = input.amountInput.trim();
+  const parsedCents =
+    trimmedAmount === "" ? null : parseDollarInputToCents(trimmedAmount);
+  if (parsedCents === null) {
+    errors.amountInput =
+      "Enter a valid amount with up to 2 decimal places (e.g., 45.90).";
+  } else if (parsedCents <= 0) {
+    errors.amountInput = "Purchase amount must be greater than $0.00.";
   }
 
   return {
