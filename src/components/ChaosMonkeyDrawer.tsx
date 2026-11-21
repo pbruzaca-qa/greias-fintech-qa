@@ -67,7 +67,7 @@ export function ChaosMonkeyDrawer() {
               chaos.enabled ? "bg-amber" : "bg-ash"
             }`}
           />
-          {chaos.enabled ? "QA // Chaos Active" : "QA // Chaos Monkey"}
+          <span>{chaos.enabled ? "QA // Chaos Active" : "QA // Chaos Monkey"}</span>
         </button>
       </div>
 

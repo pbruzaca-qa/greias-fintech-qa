@@ -247,7 +247,7 @@ export function InstantTransfersPanel({
                   : "border-graphite-700 bg-obsidian-950 text-stone hover:border-graphite-600 hover:text-ivory"
               }`}
             >
-              Pix Transfer ($0.00 Fee)
+              <span>Pix Transfer ($0.00 Fee)</span>
             </button>
             <button
               type="button"
@@ -259,7 +259,7 @@ export function InstantTransfersPanel({
                   : "border-graphite-700 bg-obsidian-950 text-stone hover:border-graphite-600 hover:text-ivory"
               }`}
             >
-              Wire Transfer ($2.50 Fee)
+              <span>Wire Transfer ($2.50 Fee)</span>
             </button>
           </div>
 
@@ -274,8 +274,10 @@ export function InstantTransfersPanel({
             data-testid="transfers-chaos-bypass-warning"
             className="border border-amber bg-amber/10 px-4 py-3 font-mono text-xs text-amber"
           >
-            [CHAOS MONKEY ACTIVE] Client-side validation is bypassed. Invalid
-            inputs will hit the backend directly to test HTTP 422 responses.
+            <span>
+              [CHAOS MONKEY ACTIVE] Client-side validation is bypassed. Invalid
+              inputs will hit the backend directly to test HTTP 422 responses.
+            </span>
           </div>
         )}
 
@@ -285,13 +287,14 @@ export function InstantTransfersPanel({
             data-testid="transfer-server-error"
             className="border border-terracotta bg-terracotta/10 px-4 py-3 font-mono text-xs text-terracotta"
           >
-            {serverError}
+            <span>{serverError}</span>
           </div>
         )}
 
         {/* Receipt View */}
         {receipt ? (
           <div
+            key="receipt-view"
             data-testid="transfer-receipt"
             className="space-y-6 border border-sage/60 bg-obsidian-900 p-6 sm:p-8"
           >
@@ -301,7 +304,7 @@ export function InstantTransfersPanel({
                   TRANSFER COMPLETED // RECEIPT
                 </p>
                 <h2 className="mt-1 font-serif text-2xl text-ivory">
-                  {receipt.rail} Transfer Confirmed
+                  <span>{receipt.rail} Transfer Confirmed</span>
                 </h2>
               </div>
               <span className="border border-sage/50 bg-sage/10 px-3 py-1 font-mono text-xs text-sage">
@@ -366,7 +369,7 @@ export function InstantTransfersPanel({
                 data-testid="new-transfer-btn"
                 className="border border-ivory bg-ivory px-5 py-2.5 font-serif text-xs font-medium text-obsidian-900 hover:bg-fillet"
               >
-                Send another transfer
+                <span>Send another transfer</span>
               </button>
               <button
                 type="button"
@@ -374,13 +377,14 @@ export function InstantTransfersPanel({
                 data-testid="receipt-view-statement-btn"
                 className="border border-graphite-700 px-5 py-2.5 font-serif text-xs text-ivory hover:border-graphite-600"
               >
-                View in Live Statement →
+                <span>View in Live Statement →</span>
               </button>
             </div>
           </div>
         ) : rail === "PIX" ? (
           /* PIX FORM */
           <form
+            key="pix-form"
             onSubmit={handlePixSubmit}
             noValidate
             data-testid="pix-transfer-form"
@@ -525,8 +529,9 @@ export function InstantTransfersPanel({
 
             <div className="flex flex-wrap items-center justify-between gap-4 border-t border-graphite-700 pt-4">
               <p className="font-mono text-xs text-stone">
-                Fee: <span className="text-sage">$0.00</span> • Settlement:
-                Instant
+                <span>Fee: </span>
+                <span className="text-sage">$0.00</span>
+                <span> • Settlement: Instant</span>
               </p>
               <button
                 type="submit"
@@ -534,13 +539,16 @@ export function InstantTransfersPanel({
                 data-testid="submit-pix-btn"
                 className="border border-ivory bg-ivory px-6 py-2.5 font-serif text-sm font-medium text-obsidian-900 transition-colors hover:bg-fillet disabled:cursor-wait disabled:opacity-60"
               >
-                {isSubmitting ? "Processing Pix..." : "Send Pix Transfer →"}
+                <span>
+                  {isSubmitting ? "Processing Pix..." : "Send Pix Transfer →"}
+                </span>
               </button>
             </div>
           </form>
         ) : (
           /* WIRE FORM */
           <form
+            key="wire-form"
             onSubmit={handleWireSubmit}
             noValidate
             data-testid="wire-transfer-form"
@@ -722,15 +730,15 @@ export function InstantTransfersPanel({
 
             <div className="flex flex-wrap items-center justify-between gap-4 border-t border-graphite-700 pt-4">
               <p className="font-mono text-xs text-stone">
-                Fee: <span className="text-ivory">{formatCents(wireFeeCents)}</span>
+                <span>Fee: </span>
+                <span className="text-ivory">{formatCents(wireFeeCents)}</span>
                 {wireTotalPreview > 0 && (
-                  <>
-                    {" "}
+                  <span className="ml-2">
                     • Total debit:{" "}
                     <span className="text-ivory">
                       {formatCents(wireTotalPreview)}
                     </span>
-                  </>
+                  </span>
                 )}
               </p>
               <button
@@ -739,7 +747,9 @@ export function InstantTransfersPanel({
                 data-testid="submit-wire-btn"
                 className="border border-ivory bg-ivory px-6 py-2.5 font-serif text-sm font-medium text-obsidian-900 transition-colors hover:bg-fillet disabled:cursor-wait disabled:opacity-60"
               >
-                {isSubmitting ? "Processing Wire..." : "Send Wire Transfer →"}
+                <span>
+                  {isSubmitting ? "Processing Wire..." : "Send Wire Transfer →"}
+                </span>
               </button>
             </div>
           </form>
