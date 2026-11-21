@@ -26,14 +26,28 @@ export interface GreiasCard {
   currentInvoiceCents: number;
 }
 
+export type LedgerEntryType = "DEPOSIT" | "PIX_OUT" | "WIRE_OUT" | "CARD_PURCHASE";
+
 export interface LedgerEntry {
   id: string;
   accountId: string;
-  type: "DEPOSIT" | "PIX_OUT" | "WIRE_OUT" | "CARD_PURCHASE";
+  type: LedgerEntryType;
   description: string;
-  amountCents: number; // positive credit, negative debit
+  amountCents: number; // positive credit, negative debit (principal)
+  feeCents?: number; // positive fee charged alongside debit
+  balanceAfterCents?: number;
+  recipientName?: string;
+  recipientTarget?: string;
   status: "COMPLETED" | "DECLINED" | "FAILED";
   createdAt: string;
+}
+
+export interface TransferLimitsSummary {
+  perTxLimitCents: number;
+  dailyLimitCents: number;
+  dailyUsedCents: number;
+  dailyRemainingCents: number;
+  wireFeeCents: number;
 }
 
 export interface ChaosConfig {
@@ -47,7 +61,29 @@ export interface AccountSnapshot {
   account: DigitalAccount;
   card: GreiasCard;
   recentEntries: LedgerEntry[];
+  limits: TransferLimitsSummary;
   chaos: ChaosConfig;
+}
+
+export type PixKeyType = "EMAIL" | "TAX_ID" | "EVP";
+
+export interface TransferReceipt {
+  transactionId: string;
+  rail: "PIX" | "WIRE";
+  recipientName: string;
+  recipientTarget: string;
+  amountCents: number;
+  feeCents: number;
+  totalDebitedCents: number;
+  balanceAfterCents: number;
+  memo?: string;
+  createdAt: string;
+}
+
+export interface TransferSuccessResponse {
+  receipt: TransferReceipt;
+  snapshot: AccountSnapshot;
+  idempotentReplay?: boolean;
 }
 
 export interface ApiErrorPayload {

@@ -63,14 +63,13 @@ export function GreiasCardVisual({
           </div>
         )}
 
-        {/* Constellation SVG overlay on right */}
+        {/* Perseus Constellation SVG overlay on right */}
         <svg
           viewBox="0 0 220 180"
           fill="none"
           aria-hidden="true"
           className="pointer-events-none absolute right-2 top-5 h-[78%] w-[52%] opacity-75"
         >
-          {/* Constellation lines */}
           <path
             d="M42 26L76 42L96 68L128 84L142 114L168 156"
             stroke="#8E8B85"
@@ -89,7 +88,6 @@ export function GreiasCardVisual({
             strokeOpacity="0.35"
             strokeWidth="0.8"
           />
-          {/* Stars */}
           <circle cx="42" cy="26" r="1.2" fill="#D8D4CC" />
           <circle cx="76" cy="42" r="1.4" fill="#D8D4CC" />
           <circle cx="96" cy="68" r="2" fill="#F2EFE9" />
@@ -100,7 +98,6 @@ export function GreiasCardVisual({
           <circle cx="142" cy="114" r="1.5" fill="#D8D4CC" />
           <circle cx="156" cy="134" r="2.2" fill="#F2EFE9" />
           <circle cx="168" cy="156" r="1.3" fill="#A6A29A" />
-          {/* Ambient star dust */}
           <circle cx="58" cy="66" r="0.7" fill="#73706A" />
           <circle cx="170" cy="48" r="0.7" fill="#73706A" />
           <circle cx="188" cy="96" r="0.8" fill="#8E8B85" />
@@ -124,7 +121,6 @@ export function GreiasCardVisual({
 
           {/* Chip + Contactless */}
           <div className="my-auto flex items-center gap-3.5 pt-2">
-            {/* EMV Metallic Chip */}
             <div
               aria-hidden="true"
               className="relative h-8 w-11 rounded-[4px] border border-fillet/60 bg-gradient-to-br from-fillet/80 via-silver/70 to-graphite-700 shadow-inner"
@@ -135,7 +131,6 @@ export function GreiasCardVisual({
               <div className="absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-[2px] border border-obsidian-900/45" />
             </div>
 
-            {/* Contactless Icon */}
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -181,19 +176,6 @@ export function GreiasCardVisual({
                 </p>
               </div>
             </div>
-
-            {/* Astrolabe emblem bottom-right */}
-            <svg
-              viewBox="0 0 32 32"
-              fill="none"
-              aria-hidden="true"
-              className="h-7 w-7 text-silver/60"
-            >
-              <circle cx="16" cy="16" r="10" stroke="currentColor" strokeWidth="0.9" />
-              <circle cx="16" cy="16" r="5" stroke="currentColor" strokeWidth="0.8" />
-              <path d="M16 2V30M2 16H30" stroke="currentColor" strokeWidth="0.8" />
-              <circle cx="16" cy="16" r="1.4" fill="#D8D4CC" />
-            </svg>
           </div>
         </div>
       </div>
