@@ -1,10 +1,12 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { useEnvironment } from "./EnvironmentProvider";
 
 export function ChaosMonkeyDrawer() {
   const { chaos, updateChaos } = useEnvironment();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -37,6 +39,10 @@ export function ChaosMonkeyDrawer() {
       setIsSaving(false);
     }
   };
+
+  if (pathname === "/") {
+    return null;
+  }
 
   return (
     <>

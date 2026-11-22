@@ -38,3 +38,55 @@
       rgba(10, 10, 10, 1) 100%
     );
 }
+
+@keyframes greiasWaterShimmer {
+  0%,
+  100% {
+    opacity: 0.16;
+    transform: translateX(0px);
+  }
+  50% {
+    opacity: 0.34;
+    transform: translateX(8px);
+  }
+}
+
+@keyframes greiasCloudDrift {
+  0%,
+  100% {
+    transform: translateX(0px);
+  }
+  50% {
+    transform: translateX(26px);
+  }
+}
+
+@keyframes greiasMonitorPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.58;
+  }
+}
+
+.greias-water-shimmer {
+  animation: greiasWaterShimmer 6s ease-in-out infinite;
+}
+
+.greias-cloud-drift {
+  animation: greiasCloudDrift 22s ease-in-out infinite;
+}
+
+.greias-monitor-pulse {
+  animation: greiasMonitorPulse 3.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .greias-water-shimmer,
+  .greias-cloud-drift,
+  .greias-monitor-pulse {
+    animation: none;
+  }
+}
