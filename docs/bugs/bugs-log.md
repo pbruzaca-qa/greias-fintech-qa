@@ -9,6 +9,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | `BUG-GRE-001` | Crash de DOM (`NotFoundError: removeChild`) ao alternar Pix ↔ Wire com tradução do navegador ativa | Alta | Instant Transfers / React UI | Troca de `<form>` sem `key` + nós de texto soltos após mutação `<font>` do Google Translate | `FIXED / VERIFIED` | [`BUG-GRE-001.md`](./BUG-GRE-001.md) |
 | `BUG-GRE-002` | Falso negativo no indicador do Chaos Monkey quando `/api/account` falha no carregamento | Média | EnvironmentProvider / Chaos Drawer | Ao recarregar `/workspace` com HTTP 500 ativo, `snapshot` ficava `null` e o botão exibia Chaos como desligado | `FIXED / VERIFIED` | [`BUG-GRE-002.md`](./BUG-GRE-002.md) |
+| `BUG-GRE-003` | Máscara de CVV duplicada no cartão ao revelar (`••• 842`) e ocultar (`••••••`) credenciais | Média | Smart Card / GreiasCardVisual | Marcador `•••` residual duplicado antes de `{revealedCvv ?? "•••"}` no slot de CVV | `FIXED / VERIFIED` | [`BUG-GRE-003.md`](./BUG-GRE-003.md) |
 
 ## Diferenciação: Injeções Controladas (Não são defeitos do produto)
 
