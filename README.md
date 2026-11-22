@@ -34,5 +34,5 @@ Open `http://localhost:3000`.
 
 - [`QA_PLAYBOOK.md`](./QA_PLAYBOOK.md) — Seed credentials, REST API reference, and quick test scenarios (EN)
 - [`docs/TEST_CATALOG.md`](./docs/TEST_CATALOG.md) — Formal test case catalog `GRE-001`–`GRE-016` (PT-BR)
-- [`docs/bugs/bugs-log.md`](./docs/bugs/bugs-log.md) — Triage log separating real defects (`BUG-GRE-001`, `BUG-GRE-002`) from controlled Chaos Monkey fault injections (PT-BR)
+- [`docs/bugs/bugs-log.md`](./docs/bugs/bugs-log.md) — Triage log separating real defects (`BUG-GRE-001` to `BUG-GRE-003`) from controlled Chaos Monkey fault injections (PT-BR)
 - [`docs/STUDY_LOG.md`](./docs/STUDY_LOG.md) — Incremental study and engineering decisions log (PT-BR)
