@@ -60,6 +60,7 @@ export function InstantTransfersPanel({
 
   const bypassClientValidation =
     snapshot.chaos.enabled && snapshot.chaos.bypassClientValidation;
+  const disableIdempotency = snapshot.chaos.enabled && snapshot.chaos.disableIdempotency;
   const wireFeeCents = snapshot.limits.wireFeeCents;
 
   const parsedWireCents = parseDollarInputToCents(wireAmount) ?? 0;
@@ -535,7 +536,7 @@ export function InstantTransfersPanel({
               </p>
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting && !disableIdempotency}
                 data-testid="submit-pix-btn"
                 className="border border-ivory bg-ivory px-6 py-2.5 font-serif text-sm font-medium text-obsidian-900 transition-colors hover:bg-fillet disabled:cursor-wait disabled:opacity-60"
               >
@@ -743,7 +744,7 @@ export function InstantTransfersPanel({
               </p>
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting && !disableIdempotency}
                 data-testid="submit-wire-btn"
                 className="border border-ivory bg-ivory px-6 py-2.5 font-serif text-sm font-medium text-obsidian-900 transition-colors hover:bg-fillet disabled:cursor-wait disabled:opacity-60"
               >

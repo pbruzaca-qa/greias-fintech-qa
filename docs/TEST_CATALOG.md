@@ -1,0 +1,23 @@
+# Catálogo de Casos de Teste — GRÉIAS Fintech QA
+
+> Ambiente educacional com operações estritamente fictícias.
+> Massa padrão após `Reset environment`: **Perseu B.** (`$12,500.00`, Pix `perseu.b@greias.fintech.test`, Tax ID `394.812.059-42`, Cartão `•••• 4821` limite `$5,000.00` / fatura `$1,240.00`).
+
+| ID | Módulo | Cenário | Pré-condição / Entrada | Resultado Esperado (UI + API) |
+| --- | --- | --- | --- | --- |
+| `GRE-001` | Landing / Header | Navegação institucional e item futuro desabilitado | Acessar `/` | `← Back to the cliff` visível com `disabled` e `aria-disabled="true"`; aviso educacional visível; cartão exibindo `PERSEU B.` |
+| `GRE-002` | Onboarding | Abertura de conta válida (Caminho Feliz) | `/open-account` com nome válido, e-mail válido, Tax ID 11 dígitos distintos, depósito `2500.00` e aceite de termos | `POST /api/accounts` retorna `201 Created`; `/workspace` passa a exibir o novo titular e saldo `$2,500.00` |
+| `GRE-003` | Onboarding | Tax ID com dígitos repetidos (`111.111.111-11`) | Ativar `Bypass Client Validation` no Chaos Monkey e enviar `111.111.111-11` | `POST /api/accounts` retorna `422 Unprocessable Entity` com erro detalhado em `documentId` |
+| `GRE-004` | Reset | Reset determinístico do ambiente | Ter criado outra conta ou feito transferências e clicar em `Reset environment` | `POST /api/reset` retorna `200 OK`; titular volta para `Perseu B.` e saldo para `$12,500.00` |
+| `GRE-005` | Instant Transfers | Pix válido com taxa zero | Pix para `kinetic@sandbox.greias.test` no valor `250.00` | `POST /api/transfers/pix` retorna `201`; saldo vai para `$12,250.00`; comprovante exibido e lançamento `PIX_OUT` aparece no `Live Statement` |
+| `GRE-006` | Instant Transfers | Bloqueio de autotransferência Pix | Pix usando o próprio e-mail `perseu.b@greias.fintech.test` ou Tax ID `394.812.059-42` | `422 SELF_TRANSFER_NOT_ALLOWED`; saldo e extrato permanecem intactos |
+| `GRE-007` | Instant Transfers | Limites por operação e diário | Tentar Pix de `5000.01` ou acumular acima de `$10,000.00` no mesmo dia | `422 LIMIT_EXCEEDED`; barra de limite diário reflete exatamente o saldo restante |
+| `GRE-008` | Instant Transfers | Valor de borda Wire com taxa de `$2.50` | Com saldo `$5,000.00`, tentar Wire de `4999.00` (`4999.00 + 2.50 = 5001.50`) | `422 INSUFFICIENT_FUNDS`; saldo não é alterado |
+| `GRE-009` | Smart Card | Segurança na exposição de credenciais | Inspecionar `GET /api/account` no Network vs. clicar em `Reveal Credentials` | `GET /api/account` nunca retorna PAN completo ou CVV; apenas `POST /api/card/credentials` retorna `pan` e `cvv` (`842`) |
+| `GRE-010` | Smart Card | Compra com cartão congelado + trilha de auditoria | Congelar cartão (`PATCH /api/card/status` → `FROZEN`) e tentar compra de `18.50` | `POST /api/card/purchase` retorna `422 CARD_FROZEN` e registra lançamento `DECLINED` no `Live Statement` sem alterar fatura |
+| `GRE-011` | Smart Card | Redução de limite abaixo da fatura atual | Com fatura em `$1,240.00`, alterar limite para `$500.00` e tentar nova compra | Limite disponível zera (`$0.00`) e nova compra falha com `422 INVOICE_LIMIT_EXCEEDED` + registro `DECLINED` |
+| `GRE-012` | Smart Card | Pagamento de fatura pelo saldo da conta | Clicar em `Pay Current Invoice` com saldo suficiente | `POST /api/card/pay-invoice` retorna `200`; saldo corrente reduz pelo valor da fatura, fatura zera (`$0.00`) e registra `INVOICE_PAYMENT` |
+| `GRE-013` | Live Statement | Filtros na API, inspetor acessível e exportação | Filtrar por `status=DECLINED`, abrir `Details`, fechar com `Esc` e exportar CSV/JSON | `GET /api/statement?status=DECLINED` filtra no servidor; `Esc` devolve o foco ao botão `Details`; CSV/JSON batem com a tabela |
+| `GRE-014` | Chaos Monkey | Atomicidade sob falha `500` / `504` / `429` | Ativar `Force 500`, `Force 504` ou `Force 429` e enviar Pix/Compra | UI exibe erro claro (`500`, `504` ou `429` com `Retry-After: 5`); nenhum centavo é debitado; indicador `QA // Chaos Active` permanece visível mesmo após reload |
+| `GRE-015` | Chaos Monkey | Detecção de dessincronização UI vs. API (`Stale Balance`) | Ativar `Stale Balance UI Desync` e enviar Pix de `100.00` | Recibo e `GET /api/account` trazem saldo real atualizado, enquanto o cabeçalho congela o saldo antigo até recarregar/desligar |
+| `GRE-016` | Chaos / Concorrência | Simulação de `race_condition` sem idempotência | Ativar `Latency +3500ms` + `Disable Idempotency (Race)` e clicar 2x rápido em enviar Pix | Duas requisições chegam ao servidor com a mesma chave e debitam duas vezes, demonstrando falha clássica de concorrência |

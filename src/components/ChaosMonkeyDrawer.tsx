@@ -77,7 +77,7 @@ export function ChaosMonkeyDrawer() {
           }}
         >
           <div className="flex h-full w-full max-w-md flex-col justify-between border-l border-graphite-700 bg-obsidian-900 p-6 text-ivory shadow-2xl">
-            <div className="space-y-5 overflow-y-auto pr-1">
+            <div className="space-y-4 overflow-y-auto pr-1">
               <div className="flex items-start justify-between border-b border-graphite-700 pb-4">
                 <div>
                   <p className="font-mono text-[10px] tracking-[0.22em] text-ash uppercase">
@@ -102,8 +102,8 @@ export function ChaosMonkeyDrawer() {
               </div>
 
               <p className="font-sans text-xs leading-relaxed text-stone">
-                Simulate adverse network, throttling, validation, and UI sync
-                conditions to practice real fintech bug hunting.
+                Simulate adverse network, gateway timeout, concurrency, and
+                validation conditions to practice real fintech bug hunting.
               </p>
 
               {/* Master Switch */}
@@ -195,6 +195,40 @@ export function ChaosMonkeyDrawer() {
                   }`}
                 >
                   <span>{chaos.forceServerError ? "ACTIVE" : "OFF"}</span>
+                </button>
+              </div>
+
+              {/* Force HTTP 504 Timeout */}
+              <div className="flex items-center justify-between border border-graphite-700 bg-charcoal-850 p-4">
+                <div className="pr-4">
+                  <p className="font-mono text-xs tracking-wider text-ivory uppercase">
+                    Force HTTP 504 Timeout
+                  </p>
+                  <p className="mt-0.5 text-xs text-ash">
+                    Simulates external clearing / webhook timeout (504).
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={chaos.forceGatewayTimeout}
+                  disabled={isSaving}
+                  data-testid="chaos-force-504-toggle"
+                  onClick={() =>
+                    void applyPatch({
+                      forceGatewayTimeout: !chaos.forceGatewayTimeout,
+                      enabled: !chaos.forceGatewayTimeout
+                        ? true
+                        : chaos.enabled,
+                    })
+                  }
+                  className={`shrink-0 border px-3 py-1 font-mono text-xs uppercase ${
+                    chaos.forceGatewayTimeout
+                      ? "border-terracotta bg-terracotta/15 text-terracotta"
+                      : "border-graphite-700 bg-obsidian-900 text-stone"
+                  }`}
+                >
+                  <span>{chaos.forceGatewayTimeout ? "ACTIVE" : "OFF"}</span>
                 </button>
               </div>
 
@@ -296,6 +330,39 @@ export function ChaosMonkeyDrawer() {
                   <span>{chaos.staleBalanceDesync ? "ACTIVE" : "OFF"}</span>
                 </button>
               </div>
+
+              {/* Disable Idempotency (Race Condition Simulation) */}
+              <div className="flex items-center justify-between border border-graphite-700 bg-charcoal-850 p-4">
+                <div className="pr-4">
+                  <p className="font-mono text-xs tracking-wider text-ivory uppercase">
+                    Disable Idempotency (Race)
+                  </p>
+                  <p className="mt-0.5 text-xs text-ash">
+                    Allows double-clicks and repeated keys to debit twice
+                    (race_condition simulation).
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={chaos.disableIdempotency}
+                  disabled={isSaving}
+                  data-testid="chaos-disable-idempotency-toggle"
+                  onClick={() =>
+                    void applyPatch({
+                      disableIdempotency: !chaos.disableIdempotency,
+                      enabled: !chaos.disableIdempotency ? true : chaos.enabled,
+                    })
+                  }
+                  className={`shrink-0 border px-3 py-1 font-mono text-xs uppercase ${
+                    chaos.disableIdempotency
+                      ? "border-amber bg-amber/15 text-amber"
+                      : "border-graphite-700 bg-obsidian-900 text-stone"
+                  }`}
+                >
+                  <span>{chaos.disableIdempotency ? "ACTIVE" : "OFF"}</span>
+                </button>
+              </div>
             </div>
 
             <div className="border-t border-graphite-700 pt-4">
@@ -308,9 +375,11 @@ export function ChaosMonkeyDrawer() {
                     enabled: false,
                     latencyMs: 0,
                     forceServerError: false,
+                    forceGatewayTimeout: false,
                     forceRateLimit: false,
                     bypassClientValidation: false,
                     staleBalanceDesync: false,
+                    disableIdempotency: false,
                   })
                 }
                 className="w-full border border-graphite-700 bg-obsidian-950 py-2 font-mono text-xs tracking-wider text-stone uppercase hover:border-graphite-600 hover:text-ivory"

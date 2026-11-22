@@ -31,6 +31,20 @@ export async function applyChaosMiddleware(options?: {
       );
     }
 
+    if (chaos.forceGatewayTimeout) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "CHAOS_GATEWAY_TIMEOUT",
+            message:
+              "Simulated HTTP 504 Gateway Timeout injected by Chaos Monkey (webhook/clearing timeout). Disable Force 504 to restore normal processing.",
+            chaosInjected: true,
+          },
+        },
+        { status: 504 }
+      );
+    }
+
     if (chaos.forceRateLimit) {
       return NextResponse.json(
         {

@@ -13,9 +13,11 @@ const DEFAULT_CHAOS: ChaosConfig = {
   enabled: false,
   latencyMs: 0,
   forceServerError: false,
+  forceGatewayTimeout: false,
   forceRateLimit: false,
   bypassClientValidation: false,
   staleBalanceDesync: false,
+  disableIdempotency: false,
 };
 
 interface EnvironmentContextValue {
@@ -150,6 +152,7 @@ export function EnvironmentProvider({
         const recoveredOutage =
           patch.enabled === false ||
           patch.forceServerError === false ||
+          patch.forceGatewayTimeout === false ||
           patch.forceRateLimit === false ||
           patch.staleBalanceDesync === false;
 

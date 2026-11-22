@@ -118,9 +118,11 @@ function createSeedState(): GreiasMemoryStore {
       enabled: false,
       latencyMs: 0,
       forceServerError: false,
+      forceGatewayTimeout: false,
       forceRateLimit: false,
       bypassClientValidation: false,
       staleBalanceDesync: false,
+      disableIdempotency: false,
     },
   };
 }
@@ -134,6 +136,10 @@ function getStore(): GreiasMemoryStore {
     globalForGreias.__greiasStore = createSeedState();
   }
   return globalForGreias.__greiasStore;
+}
+
+function isIdempotencyActive(store: GreiasMemoryStore): boolean {
+  return !(store.chaos.enabled && store.chaos.disableIdempotency);
 }
 
 function computeDailyLimits(
@@ -243,20 +249,26 @@ export function updateChaosConfig(next: Partial<ChaosConfig>): ChaosConfig {
     enabled: next.enabled ?? store.chaos.enabled,
     latencyMs: next.latencyMs ?? store.chaos.latencyMs,
     forceServerError: next.forceServerError ?? store.chaos.forceServerError,
+    forceGatewayTimeout:
+      next.forceGatewayTimeout ?? store.chaos.forceGatewayTimeout,
     forceRateLimit: next.forceRateLimit ?? store.chaos.forceRateLimit,
     bypassClientValidation:
       next.bypassClientValidation ?? store.chaos.bypassClientValidation,
     staleBalanceDesync:
       next.staleBalanceDesync ?? store.chaos.staleBalanceDesync,
+    disableIdempotency:
+      next.disableIdempotency ?? store.chaos.disableIdempotency,
   };
 
   if (
     next.enabled === undefined &&
     (updated.latencyMs > 0 ||
       updated.forceServerError ||
+      updated.forceGatewayTimeout ||
       updated.forceRateLimit ||
       updated.bypassClientValidation ||
-      updated.staleBalanceDesync)
+      updated.staleBalanceDesync ||
+      updated.disableIdempotency)
   ) {
     updated.enabled = true;
   }
@@ -277,6 +289,7 @@ export function resetEnvironment(resetChaos = false): AccountSnapshot {
 
 export function getCachedIdempotentAccount(key: string): AccountSnapshot | null {
   const store = getStore();
+  if (!isIdempotencyActive(store)) return null;
   return store.idempotencyCache[key] ?? null;
 }
 
@@ -289,7 +302,11 @@ export function createDigitalAccount(params: {
 }): AccountSnapshot {
   const store = getStore();
 
-  if (params.idempotencyKey && store.idempotencyCache[params.idempotencyKey]) {
+  if (
+    isIdempotencyActive(store) &&
+    params.idempotencyKey &&
+    store.idempotencyCache[params.idempotencyKey]
+  ) {
     return store.idempotencyCache[params.idempotencyKey];
   }
 
@@ -351,7 +368,7 @@ export function createDigitalAccount(params: {
   store.activeAccountId = accountId;
 
   const snapshot = getActiveSnapshot();
-  if (params.idempotencyKey) {
+  if (isIdempotencyActive(store) && params.idempotencyKey) {
     store.idempotencyCache[params.idempotencyKey] = snapshot;
   }
 
@@ -373,6 +390,7 @@ export function executePixTransfer(params: {
   const store = getStore();
 
   if (
+    isIdempotencyActive(store) &&
     params.idempotencyKey &&
     store.transferIdempotencyCache[params.idempotencyKey]
   ) {
@@ -488,7 +506,7 @@ export function executePixTransfer(params: {
     snapshot: getActiveSnapshot(),
   };
 
-  if (params.idempotencyKey) {
+  if (isIdempotencyActive(store) && params.idempotencyKey) {
     store.transferIdempotencyCache[params.idempotencyKey] = responseData;
   }
 
@@ -508,6 +526,7 @@ export function executeWireTransfer(params: {
   const store = getStore();
 
   if (
+    isIdempotencyActive(store) &&
     params.idempotencyKey &&
     store.transferIdempotencyCache[params.idempotencyKey]
   ) {
@@ -611,7 +630,7 @@ export function executeWireTransfer(params: {
     snapshot: getActiveSnapshot(),
   };
 
-  if (params.idempotencyKey) {
+  if (isIdempotencyActive(store) && params.idempotencyKey) {
     store.transferIdempotencyCache[params.idempotencyKey] = responseData;
   }
 
@@ -671,6 +690,7 @@ export function executeCardPurchase(params: {
   const store = getStore();
 
   if (
+    isIdempotencyActive(store) &&
     params.idempotencyKey &&
     store.cardActionIdempotencyCache[params.idempotencyKey]
   ) {
@@ -767,7 +787,7 @@ export function executeCardPurchase(params: {
     snapshot: getActiveSnapshot(),
   };
 
-  if (params.idempotencyKey) {
+  if (isIdempotencyActive(store) && params.idempotencyKey) {
     store.cardActionIdempotencyCache[params.idempotencyKey] = responseData;
   }
 
@@ -780,6 +800,7 @@ export function payCurrentCardInvoice(params?: {
   const store = getStore();
 
   if (
+    isIdempotencyActive(store) &&
     params?.idempotencyKey &&
     store.cardActionIdempotencyCache[params.idempotencyKey]
   ) {
@@ -840,7 +861,7 @@ export function payCurrentCardInvoice(params?: {
     snapshot: getActiveSnapshot(),
   };
 
-  if (params?.idempotencyKey) {
+  if (isIdempotencyActive(store) && params?.idempotencyKey) {
     store.cardActionIdempotencyCache[params.idempotencyKey] = responseData;
   }
 

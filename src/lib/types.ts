@@ -68,9 +68,11 @@ export interface ChaosConfig {
   enabled: boolean;
   latencyMs: 0 | 1500 | 3500;
   forceServerError: boolean;
+  forceGatewayTimeout: boolean;
   forceRateLimit: boolean;
   bypassClientValidation: boolean;
   staleBalanceDesync: boolean;
+  disableIdempotency: boolean;
 }
 
 export interface AccountSnapshot {

@@ -18,7 +18,7 @@ A full-stack simulated digital bank built with **Next.js (App Router)**, **TypeS
   - Freeze / Unfreeze (`PATCH /api/card/status`), invoice limit adjustments (`PATCH /api/card/limit`), simulated purchases (`POST /api/card/purchase`) logging `DECLINED` attempts, and invoice payment (`POST /api/card/pay-invoice`).
 - **03 Live Statement (`GET /api/statement`)**: Server-side filtering (`type`, `status`, `q`), accessible Transaction Inspector modal, and CSV/JSON export.
 - **Deterministic QA Reset (`POST /api/reset`)**: Restores the `Perseu B.` seed state cleanly at any time.
-- **Chaos Monkey (`GET/PUT /api/chaos`)**: Artificial latency (`+1500ms` / `+3500ms`), forced `HTTP 500`, forced `HTTP 429` (`Retry-After`), client validation bypass, and intentional stale-balance UI desync training mode.
+- **Chaos Monkey (`GET/PUT /api/chaos`)**: Artificial latency (`+1500ms` / `+3500ms`), forced `HTTP 500`, forced `HTTP 429` (`Retry-After`), forced `HTTP 504`, Disable Idempotency (Race Condition), client validation bypass, and intentional stale-balance UI desync training mode.
 
 ## Running Locally
 
@@ -30,4 +30,9 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-See [`QA_PLAYBOOK.md`](./QA_PLAYBOOK.md) for seed data, API reference, and curated test cases.
+## QA Documentation & Artifacts
+
+- [`QA_PLAYBOOK.md`](./QA_PLAYBOOK.md) — Seed credentials, REST API reference, and quick test scenarios (EN)
+- [`docs/TEST_CATALOG.md`](./docs/TEST_CATALOG.md) — Formal test case catalog `GRE-001`–`GRE-016` (PT-BR)
+- [`docs/bugs/bugs-log.md`](./docs/bugs/bugs-log.md) — Triage log separating real defects (`BUG-GRE-001`, `BUG-GRE-002`) from controlled Chaos Monkey fault injections (PT-BR)
+- [`docs/STUDY_LOG.md`](./docs/STUDY_LOG.md) — Incremental study and engineering decisions log (PT-BR)

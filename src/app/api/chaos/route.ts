@@ -33,9 +33,17 @@ export async function PUT(request: Request) {
     enabled: typeof body.enabled === "boolean" ? body.enabled : undefined,
     latencyMs,
     forceServerError:
-      typeof body.forceServerError === "boolean" ? body.forceServerError : undefined,
+      typeof body.forceServerError === "boolean"
+        ? body.forceServerError
+        : undefined,
+    forceGatewayTimeout:
+      typeof body.forceGatewayTimeout === "boolean"
+        ? body.forceGatewayTimeout
+        : undefined,
     forceRateLimit:
-      typeof body.forceRateLimit === "boolean" ? body.forceRateLimit : undefined,
+      typeof body.forceRateLimit === "boolean"
+        ? body.forceRateLimit
+        : undefined,
     bypassClientValidation:
       typeof body.bypassClientValidation === "boolean"
         ? body.bypassClientValidation
@@ -43,6 +51,10 @@ export async function PUT(request: Request) {
     staleBalanceDesync:
       typeof body.staleBalanceDesync === "boolean"
         ? body.staleBalanceDesync
+        : undefined,
+    disableIdempotency:
+      typeof body.disableIdempotency === "boolean"
+        ? body.disableIdempotency
         : undefined,
   });
 
