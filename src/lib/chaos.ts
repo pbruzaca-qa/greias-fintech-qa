@@ -16,18 +16,39 @@ export async function applyChaosMiddleware(options?: {
     await sleep(chaos.latencyMs);
   }
 
-  if (options?.allowServerError !== false && chaos.forceServerError) {
-    return NextResponse.json(
-      {
-        error: {
-          code: "CHAOS_SIMULATED_OUTAGE",
-          message:
-            "Simulated HTTP 500 failure injected by Chaos Monkey. Disable Force Server Error to restore normal processing.",
-          chaosInjected: true,
+  if (options?.allowServerError !== false) {
+    if (chaos.forceServerError) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "CHAOS_SIMULATED_OUTAGE",
+            message:
+              "Simulated HTTP 500 failure injected by Chaos Monkey. Disable Force Server Error to restore normal processing.",
+            chaosInjected: true,
+          },
         },
-      },
-      { status: 500 }
-    );
+        { status: 500 }
+      );
+    }
+
+    if (chaos.forceRateLimit) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "CHAOS_RATE_LIMITED",
+            message:
+              "Simulated HTTP 429 Too Many Requests injected by Chaos Monkey. Retry after 5 seconds or disable Force Rate Limit.",
+            chaosInjected: true,
+          },
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": "5",
+          },
+        }
+      );
+    }
   }
 
   return null;

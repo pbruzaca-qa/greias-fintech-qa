@@ -71,6 +71,8 @@ function createSeedState(): GreiasMemoryStore {
       description: "Cloud Infrastructure Lab (Card •••• 4821)",
       amountCents: -42_000,
       balanceAfterCents: 1_250_000,
+      recipientName: "Cloud Infrastructure Lab",
+      recipientTarget: "Card •••• 4821",
       status: "COMPLETED",
       createdAt: "2026-02-10T16:40:00.000Z",
     },
@@ -116,7 +118,9 @@ function createSeedState(): GreiasMemoryStore {
       enabled: false,
       latencyMs: 0,
       forceServerError: false,
+      forceRateLimit: false,
       bypassClientValidation: false,
+      staleBalanceDesync: false,
     },
   };
 }
@@ -173,21 +177,59 @@ export function getActiveSnapshot(): AccountSnapshot {
   };
 }
 
-export function getStatementEntries(): {
+export function getStatementEntries(filters?: {
+  type?: string;
+  status?: string;
+  q?: string;
+}): {
   account: DigitalAccount;
   entries: LedgerEntry[];
+  totalCount: number;
   limits: TransferLimitsSummary;
 } {
   const store = getStore();
   const account =
     store.accounts[store.activeAccountId] ?? store.accounts[DEFAULT_ACCOUNT_ID];
-  const entries = store.ledgerByAccountId[account.id] ?? [];
+  const allEntries = store.ledgerByAccountId[account.id] ?? [];
   const todayPrefix = new Date().toISOString().slice(0, 10);
+
+  const typeFilter = filters?.type?.trim().toUpperCase();
+  const statusFilter = filters?.status?.trim().toUpperCase();
+  const query = filters?.q?.trim().toLowerCase();
+
+  const filtered = allEntries.filter((entry) => {
+    if (typeFilter && typeFilter !== "ALL" && entry.type !== typeFilter) {
+      return false;
+    }
+    if (
+      statusFilter &&
+      statusFilter !== "ALL" &&
+      entry.status !== statusFilter
+    ) {
+      return false;
+    }
+    if (query) {
+      const haystack = [
+        entry.id,
+        entry.description,
+        entry.recipientName ?? "",
+        entry.recipientTarget ?? "",
+        entry.type,
+      ]
+        .join(" ")
+        .toLowerCase();
+      if (!haystack.includes(query)) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   return {
     account: { ...account },
-    entries: entries.map((entry) => ({ ...entry })),
-    limits: computeDailyLimits(entries, todayPrefix),
+    entries: filtered.map((entry) => ({ ...entry })),
+    totalCount: allEntries.length,
+    limits: computeDailyLimits(allEntries, todayPrefix),
   };
 }
 
@@ -201,15 +243,20 @@ export function updateChaosConfig(next: Partial<ChaosConfig>): ChaosConfig {
     enabled: next.enabled ?? store.chaos.enabled,
     latencyMs: next.latencyMs ?? store.chaos.latencyMs,
     forceServerError: next.forceServerError ?? store.chaos.forceServerError,
+    forceRateLimit: next.forceRateLimit ?? store.chaos.forceRateLimit,
     bypassClientValidation:
       next.bypassClientValidation ?? store.chaos.bypassClientValidation,
+    staleBalanceDesync:
+      next.staleBalanceDesync ?? store.chaos.staleBalanceDesync,
   };
 
   if (
     next.enabled === undefined &&
     (updated.latencyMs > 0 ||
       updated.forceServerError ||
-      updated.bypassClientValidation)
+      updated.forceRateLimit ||
+      updated.bypassClientValidation ||
+      updated.staleBalanceDesync)
   ) {
     updated.enabled = true;
   }
@@ -570,10 +617,6 @@ export function executeWireTransfer(params: {
 
   return { ok: true, data: responseData };
 }
-
-/* ============================
-   BLOCK 3 — SMART CARD CONTROL
-   ============================ */
 
 export function getActiveCardCredentials(): CardCredentialsPayload {
   const store = getStore();

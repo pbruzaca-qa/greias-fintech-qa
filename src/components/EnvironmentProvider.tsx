@@ -9,8 +9,18 @@ import React, {
 } from "react";
 import { AccountSnapshot, ChaosConfig } from "@/lib/types";
 
+const DEFAULT_CHAOS: ChaosConfig = {
+  enabled: false,
+  latencyMs: 0,
+  forceServerError: false,
+  forceRateLimit: false,
+  bypassClientValidation: false,
+  staleBalanceDesync: false,
+};
+
 interface EnvironmentContextValue {
   snapshot: AccountSnapshot | null;
+  chaos: ChaosConfig;
   isLoading: boolean;
   isResetting: boolean;
   statusBanner: string | null;
@@ -28,10 +38,23 @@ export function EnvironmentProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [snapshot, setSnapshot] = useState<AccountSnapshot | null>(null);
+  const [snapshot, setSnapshotState] = useState<AccountSnapshot | null>(null);
+  const [chaos, setChaos] = useState<ChaosConfig>(DEFAULT_CHAOS);
   const [isLoading, setIsLoading] = useState(true);
   const [isResetting, setIsResetting] = useState(false);
   const [statusBanner, setStatusBanner] = useState<string | null>(null);
+
+  const refreshChaos = useCallback(async () => {
+    try {
+      const res = await fetch("/api/chaos", { cache: "no-store" });
+      if (res.ok) {
+        const data = (await res.json()) as { chaos: ChaosConfig };
+        setChaos(data.chaos);
+      }
+    } catch {
+      // Ignore transient network errors on chaos sync
+    }
+  }, []);
 
   const refreshSnapshot = useCallback(async () => {
     setIsLoading(true);
@@ -39,16 +62,50 @@ export function EnvironmentProvider({
       const res = await fetch("/api/account", { cache: "no-store" });
       if (res.ok) {
         const data = (await res.json()) as AccountSnapshot;
-        setSnapshot(data);
+        setSnapshotState(data);
+        setChaos(data.chaos);
+      } else {
+        setSnapshotState(null);
+        await refreshChaos();
       }
+    } catch {
+      await refreshChaos();
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [refreshChaos]);
 
   useEffect(() => {
     void refreshSnapshot();
-  }, [refreshSnapshot]);
+    void refreshChaos();
+  }, [refreshSnapshot, refreshChaos]);
+
+  const setSnapshot: React.Dispatch<
+    React.SetStateAction<AccountSnapshot | null>
+  > = useCallback((action) => {
+    setSnapshotState((prev) => {
+      const next = typeof action === "function" ? action(prev) : action;
+      if (next) {
+        setChaos(next.chaos);
+      }
+      if (
+        prev &&
+        next &&
+        prev.account.id === next.account.id &&
+        next.chaos.enabled &&
+        next.chaos.staleBalanceDesync
+      ) {
+        return {
+          ...next,
+          account: {
+            ...next.account,
+            balanceCents: prev.account.balanceCents,
+          },
+        };
+      }
+      return next;
+    });
+  }, []);
 
   const resetEnvironment = useCallback(async () => {
     setIsResetting(true);
@@ -61,7 +118,8 @@ export function EnvironmentProvider({
       });
       if (res.ok) {
         const data = (await res.json()) as AccountSnapshot;
-        setSnapshot(data);
+        setSnapshotState(data);
+        setChaos(data.chaos);
         setStatusBanner(
           "Environment reset to deterministic baseline (Perseu B.)."
         );
@@ -75,21 +133,33 @@ export function EnvironmentProvider({
     }
   }, []);
 
-  const updateChaos = useCallback(async (patch: Partial<ChaosConfig>) => {
-    const res = await fetch("/api/chaos", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    });
-    if (res.ok) {
-      const data = (await res.json()) as { chaos: ChaosConfig };
-      setSnapshot((prev) =>
-        prev
-          ? { ...prev, chaos: data.chaos }
-          : null
-      );
-    }
-  }, []);
+  const updateChaos = useCallback(
+    async (patch: Partial<ChaosConfig>) => {
+      const res = await fetch("/api/chaos", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { chaos: ChaosConfig };
+        setChaos(data.chaos);
+        setSnapshotState((prev) =>
+          prev ? { ...prev, chaos: data.chaos } : null
+        );
+
+        const recoveredOutage =
+          patch.enabled === false ||
+          patch.forceServerError === false ||
+          patch.forceRateLimit === false ||
+          patch.staleBalanceDesync === false;
+
+        if (recoveredOutage) {
+          void refreshSnapshot();
+        }
+      }
+    },
+    [refreshSnapshot]
+  );
 
   const clearStatusBanner = useCallback(() => setStatusBanner(null), []);
 
@@ -97,6 +167,7 @@ export function EnvironmentProvider({
     <EnvironmentContext.Provider
       value={{
         snapshot,
+        chaos,
         isLoading,
         isResetting,
         statusBanner,

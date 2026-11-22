@@ -2,20 +2,23 @@
 
 > Educational environment. All operations are fictional.
 
-A full-stack simulated digital bank built with Next.js (App Router), TypeScript, Tailwind CSS, and REST API routes for manual, E2E, and API QA practice.
+A full-stack simulated digital bank built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS**, and **REST API routes** for manual, exploratory, E2E, and API QA practice.
 
-## Current Scope (Block 1)
+## Implemented Capabilities (Blocks 1–4)
 
-- **Official Landing Page** (`/`) aligned with the Gréias monochrome obsidian, ivory, and surgical sage palette
-- **Simulated Digital Onboarding** (`/open-account`, `POST /api/accounts`) with client/server validation, integer-cents money handling, and `Idempotency-Key` support
-- **Default Seed Account (`Perseu B.`) & Workspace** (`/workspace`, `GET /api/account`)
-- **Deterministic QA Reset** (`POST /api/reset`) restoring the baseline `Perseu B.` seed state
-- **Chaos Monkey Fault Injection** (`GET/PUT /api/chaos`) supporting artificial latency, simulated HTTP 500 outages, and client-validation bypass to verify HTTP 422 server enforcement
-
-### Planned Next Blocks
-- **Block 2:** Instant Transfers (Pix & Wire) + real-time Statement integration
-- **Block 3:** Smart Card Control (freeze/unfreeze, reveal credentials, invoice limit & card purchase simulator)
-- **Block 4:** Statement filtering, receipt details, export, and expanded Chaos Monkey scenarios
+- **Official Landing Page (`/`)**: Monochrome obsidian, ivory, and surgical sage identity, accessible navigation, disabled `← Back to the cliff` placeholder, and vector Greias Card (`PERSEU B.`).
+- **Digital Onboarding (`/open-account`, `POST /api/accounts`)**: Client & server validation (`HTTP 422`), Tax ID format enforcement (rejecting repeated digits), integer-cents arithmetic, and `Idempotency-Key` support.
+- **Account Workspace (`/workspace`)**: Pre-loaded default seed account (`Perseu B.`, `$12,500.00`) plus newly created accounts.
+- **01 Instant Transfers (`POST /api/transfers/pix`, `POST /api/transfers/wire`)**:
+  - Pix (`$0.00` fee) across Email, Tax ID, and EVP keys with sandbox recipient lookup.
+  - Wire (`$2.50` fee) with balance + fee sufficiency validation.
+  - Self-transfer prevention, `$5,000.00` per-transaction and `$10,000.00` daily limit tracking, and idempotency protection.
+- **02 Smart Card Control (`/api/card/*`)**:
+  - On-demand credential reveal (`POST /api/card/credentials`) so PAN/CVV never leak on `GET /api/account`.
+  - Freeze / Unfreeze (`PATCH /api/card/status`), invoice limit adjustments (`PATCH /api/card/limit`), simulated purchases (`POST /api/card/purchase`) logging `DECLINED` attempts, and invoice payment (`POST /api/card/pay-invoice`).
+- **03 Live Statement (`GET /api/statement`)**: Server-side filtering (`type`, `status`, `q`), accessible Transaction Inspector modal, and CSV/JSON export.
+- **Deterministic QA Reset (`POST /api/reset`)**: Restores the `Perseu B.` seed state cleanly at any time.
+- **Chaos Monkey (`GET/PUT /api/chaos`)**: Artificial latency (`+1500ms` / `+3500ms`), forced `HTTP 500`, forced `HTTP 429` (`Retry-After`), client validation bypass, and intentional stale-balance UI desync training mode.
 
 ## Running Locally
 
@@ -23,3 +26,8 @@ A full-stack simulated digital bank built with Next.js (App Router), TypeScript,
 npm install
 npm run typecheck
 npm run dev
+```
+
+Open `http://localhost:3000`.
+
+See [`QA_PLAYBOOK.md`](./QA_PLAYBOOK.md) for seed data, API reference, and curated test cases.

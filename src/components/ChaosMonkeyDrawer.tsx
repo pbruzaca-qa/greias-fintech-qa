@@ -4,18 +4,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { useEnvironment } from "./EnvironmentProvider";
 
 export function ChaosMonkeyDrawer() {
-  const { snapshot, updateChaos } = useEnvironment();
+  const { chaos, updateChaos } = useEnvironment();
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-
-  const chaos = snapshot?.chaos ?? {
-    enabled: false,
-    latencyMs: 0 as const,
-    forceServerError: false,
-    bypassClientValidation: false,
-  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -47,7 +40,6 @@ export function ChaosMonkeyDrawer() {
 
   return (
     <>
-      {/* Discrete Floating QA Trigger */}
       <div className="fixed bottom-4 right-4 z-40">
         <button
           ref={triggerRef}
@@ -67,11 +59,12 @@ export function ChaosMonkeyDrawer() {
               chaos.enabled ? "bg-amber" : "bg-ash"
             }`}
           />
-          <span>{chaos.enabled ? "QA // Chaos Active" : "QA // Chaos Monkey"}</span>
+          <span>
+            {chaos.enabled ? "QA // Chaos Active" : "QA // Chaos Monkey"}
+          </span>
         </button>
       </div>
 
-      {/* Modal / Side Drawer */}
       {isOpen && (
         <div
           role="dialog"
@@ -84,7 +77,7 @@ export function ChaosMonkeyDrawer() {
           }}
         >
           <div className="flex h-full w-full max-w-md flex-col justify-between border-l border-graphite-700 bg-obsidian-900 p-6 text-ivory shadow-2xl">
-            <div className="space-y-6 overflow-y-auto">
+            <div className="space-y-5 overflow-y-auto pr-1">
               <div className="flex items-start justify-between border-b border-graphite-700 pb-4">
                 <div>
                   <p className="font-mono text-[10px] tracking-[0.22em] text-ash uppercase">
@@ -109,9 +102,8 @@ export function ChaosMonkeyDrawer() {
               </div>
 
               <p className="font-sans text-xs leading-relaxed text-stone">
-                Simulate adverse network and validation conditions to verify how
-                Gréias behaves under failure. By default, strict fintech rules
-                apply.
+                Simulate adverse network, throttling, validation, and UI sync
+                conditions to practice real fintech bug hunting.
               </p>
 
               {/* Master Switch */}
@@ -137,7 +129,7 @@ export function ChaosMonkeyDrawer() {
                       : "border-graphite-700 bg-obsidian-900 text-stone"
                   }`}
                 >
-                  {chaos.enabled ? "ON" : "OFF"}
+                  <span>{chaos.enabled ? "ON" : "OFF"}</span>
                 </button>
               </div>
 
@@ -147,8 +139,7 @@ export function ChaosMonkeyDrawer() {
                   Artificial Latency
                 </p>
                 <p className="text-xs text-ash">
-                  Test loading spinners, disabled buttons, and double-click
-                  idempotency.
+                  Test loading states and Idempotency-Key replay protection.
                 </p>
                 <div className="grid grid-cols-3 gap-2 pt-2">
                   {([0, 1500, 3500] as const).map((ms) => (
@@ -169,7 +160,7 @@ export function ChaosMonkeyDrawer() {
                           : "border-graphite-700 bg-obsidian-900 text-stone hover:border-graphite-600"
                       }`}
                     >
-                      {ms === 0 ? "0 ms" : `+${ms} ms`}
+                      <span>{ms === 0 ? "0 ms" : `+${ms} ms`}</span>
                     </button>
                   ))}
                 </div>
@@ -182,8 +173,7 @@ export function ChaosMonkeyDrawer() {
                     Force HTTP 500 Outage
                   </p>
                   <p className="mt-0.5 text-xs text-ash">
-                    API endpoints fail with simulated server error (except
-                    /api/reset).
+                    API endpoints fail with simulated 500 (except /api/reset).
                   </p>
                 </div>
                 <button
@@ -204,7 +194,39 @@ export function ChaosMonkeyDrawer() {
                       : "border-graphite-700 bg-obsidian-900 text-stone"
                   }`}
                 >
-                  {chaos.forceServerError ? "ACTIVE" : "OFF"}
+                  <span>{chaos.forceServerError ? "ACTIVE" : "OFF"}</span>
+                </button>
+              </div>
+
+              {/* Force HTTP 429 Rate Limit */}
+              <div className="flex items-center justify-between border border-graphite-700 bg-charcoal-850 p-4">
+                <div className="pr-4">
+                  <p className="font-mono text-xs tracking-wider text-ivory uppercase">
+                    Force HTTP 429 Rate Limit
+                  </p>
+                  <p className="mt-0.5 text-xs text-ash">
+                    Returns 429 Too Many Requests with Retry-After: 5 header.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={chaos.forceRateLimit}
+                  disabled={isSaving}
+                  data-testid="chaos-force-429-toggle"
+                  onClick={() =>
+                    void applyPatch({
+                      forceRateLimit: !chaos.forceRateLimit,
+                      enabled: !chaos.forceRateLimit ? true : chaos.enabled,
+                    })
+                  }
+                  className={`shrink-0 border px-3 py-1 font-mono text-xs uppercase ${
+                    chaos.forceRateLimit
+                      ? "border-terracotta bg-terracotta/15 text-terracotta"
+                      : "border-graphite-700 bg-obsidian-900 text-stone"
+                  }`}
+                >
+                  <span>{chaos.forceRateLimit ? "ACTIVE" : "OFF"}</span>
                 </button>
               </div>
 
@@ -215,8 +237,7 @@ export function ChaosMonkeyDrawer() {
                     Bypass Client Validation
                   </p>
                   <p className="mt-0.5 text-xs text-ash">
-                    Submits raw invalid inputs to verify HTTP 422 server
-                    defense.
+                    Submits raw invalid inputs to verify HTTP 422 server rules.
                   </p>
                 </div>
                 <button
@@ -239,7 +260,40 @@ export function ChaosMonkeyDrawer() {
                       : "border-graphite-700 bg-obsidian-900 text-stone"
                   }`}
                 >
-                  {chaos.bypassClientValidation ? "ACTIVE" : "OFF"}
+                  <span>{chaos.bypassClientValidation ? "ACTIVE" : "OFF"}</span>
+                </button>
+              </div>
+
+              {/* Stale Balance UI Desync */}
+              <div className="flex items-center justify-between border border-graphite-700 bg-charcoal-850 p-4">
+                <div className="pr-4">
+                  <p className="font-mono text-xs tracking-wider text-ivory uppercase">
+                    Stale Balance UI Desync
+                  </p>
+                  <p className="mt-0.5 text-xs text-ash">
+                    Freezes header balance visually after mutations to train
+                    UI-vs-API bug reporting.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={chaos.staleBalanceDesync}
+                  disabled={isSaving}
+                  data-testid="chaos-stale-balance-toggle"
+                  onClick={() =>
+                    void applyPatch({
+                      staleBalanceDesync: !chaos.staleBalanceDesync,
+                      enabled: !chaos.staleBalanceDesync ? true : chaos.enabled,
+                    })
+                  }
+                  className={`shrink-0 border px-3 py-1 font-mono text-xs uppercase ${
+                    chaos.staleBalanceDesync
+                      ? "border-amber bg-amber/15 text-amber"
+                      : "border-graphite-700 bg-obsidian-900 text-stone"
+                  }`}
+                >
+                  <span>{chaos.staleBalanceDesync ? "ACTIVE" : "OFF"}</span>
                 </button>
               </div>
             </div>
@@ -254,12 +308,14 @@ export function ChaosMonkeyDrawer() {
                     enabled: false,
                     latencyMs: 0,
                     forceServerError: false,
+                    forceRateLimit: false,
                     bypassClientValidation: false,
+                    staleBalanceDesync: false,
                   })
                 }
                 className="w-full border border-graphite-700 bg-obsidian-950 py-2 font-mono text-xs tracking-wider text-stone uppercase hover:border-graphite-600 hover:text-ivory"
               >
-                Restore Normal Mode
+                <span>Restore Normal Mode</span>
               </button>
             </div>
           </div>

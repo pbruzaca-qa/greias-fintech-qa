@@ -34,9 +34,15 @@ export async function PUT(request: Request) {
     latencyMs,
     forceServerError:
       typeof body.forceServerError === "boolean" ? body.forceServerError : undefined,
+    forceRateLimit:
+      typeof body.forceRateLimit === "boolean" ? body.forceRateLimit : undefined,
     bypassClientValidation:
       typeof body.bypassClientValidation === "boolean"
         ? body.bypassClientValidation
+        : undefined,
+    staleBalanceDesync:
+      typeof body.staleBalanceDesync === "boolean"
+        ? body.staleBalanceDesync
         : undefined,
   });
 
