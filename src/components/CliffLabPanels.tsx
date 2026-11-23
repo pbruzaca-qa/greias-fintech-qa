@@ -1,43 +1,175 @@
 "use client";
 
 import Link from "next/link";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { buildGreiasPostmanCollection } from "@/lib/postmanCollection";
-import { StudyNote } from "@/lib/studyNotesStore";
 
 export type CliffSectionId = "01" | "02" | "03" | "04";
+
+interface StudyTrackItem {
+  id: string;
+  title: string;
+  detail: string;
+}
+
+interface StudyTrack {
+  code: string;
+  title: string;
+  focus: string;
+  items: StudyTrackItem[];
+}
+
+const STUDY_TRACKS_STORAGE_KEY = "greias-lab-study-tracks-v1";
+
+const STUDY_TRACKS: StudyTrack[] = [
+  {
+    code: "TRACK 01",
+    title: "Manual & Boundary QA",
+    focus: "Business rules, cents precision, and UI edge cases",
+    items: [
+      {
+        id: "t1-onboarding",
+        title: "Onboarding limits (/open-account)",
+        detail:
+          "Test repeated-digit Tax ID (111.111.111-11), negative deposits, and deposits above $100,000.00.",
+      },
+      {
+        id: "t1-transfers",
+        title: "Cents & transfer ceilings (Pix vs. Wire)",
+        detail:
+          "Verify $0.00 Pix fee vs. $2.50 Wire fee, $5,000.00 per-transfer cap, $10,000.00 daily limit, and self-transfer block.",
+      },
+      {
+        id: "t1-card",
+        title: "Smart Card lifecycle (/workspace)",
+        detail:
+          "Freeze the card, attempt a simulated purchase (verify 422 + DECLINED ledger entry), update invoice limit, and pay invoice.",
+      },
+      {
+        id: "t1-dom",
+        title: "Accessibility & DOM resilience",
+        detail:
+          "Navigate tabs and modals via keyboard (Tab / Esc) and test Pix / Wire switching with browser translation on (BUG-GRE-001).",
+      },
+    ],
+  },
+  {
+    code: "TRACK 02",
+    title: "API & Contract Testing",
+    focus: "HTTP status codes, security masking, and idempotency",
+    items: [
+      {
+        id: "t2-postman",
+        title: "Import live REST collection",
+        detail:
+          "Download the 13-route Postman Collection from Module 02 and validate HTTP 200, 201, 400, and 422 contracts.",
+      },
+      {
+        id: "t2-security",
+        title: "Audit PAN / CVV masking",
+        detail:
+          "Inspect GET /api/account in DevTools Network to confirm full card numbers and CVV never leak before reveal (BUG-GRE-003).",
+      },
+      {
+        id: "t2-idempotency",
+        title: "Verify Idempotency-Key behavior",
+        detail:
+          "Send POST /api/transfers/pix twice with the same Idempotency-Key header and confirm only one debit is executed.",
+      },
+    ],
+  },
+  {
+    code: "TRACK 03",
+    title: "Chaos Engineering & Bug Hunting",
+    focus: "Fault injection, race conditions, and state truth",
+    items: [
+      {
+        id: "t3-bypass",
+        title: "Server-side barrier (Bypass Client Validation)",
+        detail:
+          "Enable client bypass in Chaos Monkey and submit invalid inputs to prove the backend enforces HTTP 422.",
+      },
+      {
+        id: "t3-outages",
+        title: "Outage & timeout resilience (500 / 504 / 429)",
+        detail:
+          "Trigger server errors, gateway timeouts, and rate limits during transfers and confirm zero phantom debits in Live Statement.",
+      },
+      {
+        id: "t3-race",
+        title: "Reproduce race condition",
+        detail:
+          "Combine Latency (+3500ms) + Disable Idempotency and double-click Send Pix to observe duplicate debit risk.",
+      },
+      {
+        id: "t3-desync",
+        title: "Hunt UI desync (Stale Balance)",
+        detail:
+          "Enable Stale Balance UI Desync, execute a transaction, and compare header balance against GET /api/account.",
+      },
+    ],
+  },
+  {
+    code: "TRACK 04",
+    title: "E2E Automation & Evidence Portfolio",
+    focus: "Repeatable suites and structured defect reports",
+    items: [
+      {
+        id: "t4-e2e",
+        title: "Deterministic E2E flow",
+        detail:
+          "Write an automated test calling POST /api/reset first, driving actions via stable data-testid hooks, and asserting on /api/statement.",
+      },
+      {
+        id: "t4-report",
+        title: "Portfolio bug report (BUG-GRE standard)",
+        detail:
+          "Document a discovered failure with reproduction steps, expected vs. actual behavior, Network evidence, and severity.",
+      },
+    ],
+  },
+];
+
+const TOTAL_TRACK_ITEMS = STUDY_TRACKS.reduce(
+  (sum, track) => sum + track.items.length,
+  0
+);
+
+function readCompletedTracks(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(STUDY_TRACKS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((id): id is string => typeof id === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCompletedTracks(ids: string[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STUDY_TRACKS_STORAGE_KEY, JSON.stringify(ids));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
 
 export function CliffLabPanelContent({
   section,
 }: {
   section: CliffSectionId;
 }) {
-  const [notes, setNotes] = useState<StudyNote[]>([]);
-  const [notesLoading, setNotesLoading] = useState(false);
-  const [noteContent, setNoteContent] = useState("");
-  const [noteCategory, setNoteCategory] =
-    useState<StudyNote["category"]>("SUGGESTION");
-  const [noteError, setNoteError] = useState<string | null>(null);
-  const [isSavingNote, setIsSavingNote] = useState(false);
-
-  const loadNotes = useCallback(async () => {
-    setNotesLoading(true);
-    try {
-      const res = await fetch("/api/study-notes", { cache: "no-store" });
-      if (res.ok) {
-        const data = (await res.json()) as { notes: StudyNote[] };
-        setNotes(data.notes);
-      }
-    } finally {
-      setNotesLoading(false);
-    }
-  }, []);
+  const [completedIds, setCompletedIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (section === "03") {
-      void loadNotes();
+      setCompletedIds(readCompletedTracks());
     }
-  }, [section, loadNotes]);
+  }, [section]);
 
   const handleDownloadPostman = () => {
     const origin =
@@ -58,42 +190,19 @@ export function CliffLabPanelContent({
     URL.revokeObjectURL(url);
   };
 
-  const handleCreateNote = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setNoteError(null);
-    if (noteContent.trim().length < 4) {
-      setNoteError("Please write at least 4 characters.");
-      return;
-    }
+  const toggleTrackItem = (itemId: string) => {
+    setCompletedIds((prev) => {
+      const next = prev.includes(itemId)
+        ? prev.filter((id) => id !== itemId)
+        : [...prev, itemId];
+      writeCompletedTracks(next);
+      return next;
+    });
+  };
 
-    setIsSavingNote(true);
-    try {
-      const res = await fetch("/api/study-notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          category: noteCategory,
-          author: "Perseu B.",
-          content: noteContent,
-        }),
-      });
-      const payload = (await res.json()) as {
-        notes?: StudyNote[];
-        error?: { message: string };
-      };
-      if (!res.ok) {
-        setNoteError(payload.error?.message ?? "Unable to save note.");
-        return;
-      }
-      if (payload.notes) {
-        setNotes(payload.notes);
-      }
-      setNoteContent("");
-    } catch {
-      setNoteError("Network error while saving study note.");
-    } finally {
-      setIsSavingNote(false);
-    }
+  const handleResetProgress = () => {
+    setCompletedIds([]);
+    writeCompletedTracks([]);
   };
 
   if (section === "01") {
@@ -177,12 +286,16 @@ export function CliffLabPanelContent({
               `394.812.059-42`.
             </li>
             <li>
-              <span className="text-ivory">Onboarding (`POST /api/accounts`):</span>{" "}
+              <span className="text-ivory">
+                Onboarding (`POST /api/accounts`):
+              </span>{" "}
               Rejects repeated-digit Tax IDs (`111.111.111-11`), negative
               deposits, or &gt; $100,000.00 (`HTTP 422`).
             </li>
             <li>
-              <span className="text-ivory">Pix (`$0.00` fee) & Wire (`$2.50` fee):</span>{" "}
+              <span className="text-ivory">
+                Pix (`$0.00` fee) & Wire (`$2.50` fee):
+              </span>{" "}
               Max `$5,000.00` per transfer, `$10,000.00` daily limit, blocks
               self-transfers, and enforces `Idempotency-Key`.
             </li>
@@ -198,89 +311,138 @@ export function CliffLabPanelContent({
   }
 
   if (section === "03") {
+    const completedCount = completedIds.length;
+    const progressPct =
+      TOTAL_TRACK_ITEMS > 0
+        ? Math.round((completedCount / TOTAL_TRACK_ITEMS) * 100)
+        : 0;
+
     return (
       <div key="panel-03" className="space-y-5 text-sm text-stone">
-        {/* Clean Study Notes / Suggestions Form ONLY */}
-        <form
-          onSubmit={handleCreateNote}
-          className="space-y-3 border border-graphite-700 bg-obsidian-950 p-4"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <label
-              htmlFor="studyNoteInput"
-              className="font-mono text-[10px] tracking-[0.2em] text-ivory uppercase"
-            >
-              STUDY NOTES & SUGGESTIONS
-            </label>
-            <select
-              value={noteCategory}
-              onChange={(e) =>
-                setNoteCategory(e.target.value as StudyNote["category"])
-              }
-              aria-label="Note category"
-              data-testid="study-note-category"
-              className="border border-graphite-700 bg-obsidian-900 px-2.5 py-1 font-mono text-[11px] text-stone focus:outline-none"
-            >
-              <option value="SUGGESTION">SUGGESTION</option>
-              <option value="NOTE">STUDY NOTE</option>
-              <option value="BUG_IDEA">TEST IDEA</option>
-            </select>
+        {/* Curriculum Header & Browser-Local Progress */}
+        <div className="space-y-3 border border-graphite-700 bg-obsidian-950 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-md space-y-1">
+              <p className="font-mono text-[10px] tracking-[0.2em] text-sage uppercase">
+                CURATED QA CURRICULUM
+              </p>
+              <p className="text-xs leading-relaxed text-stone">
+                Structured practice tracks mapped to real Gréias Fintech
+                capabilities. Check items off as you test — progress stays
+                private in this browser.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span
+                data-testid="study-tracks-progress"
+                className="font-mono text-xs tabular-nums text-ivory"
+              >
+                <span>{`${completedCount} / ${TOTAL_TRACK_ITEMS} completed`}</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleResetProgress}
+                disabled={completedCount === 0}
+                data-testid="study-tracks-reset"
+                className="border border-graphite-700 px-2.5 py-1 font-mono text-[10px] text-stone transition-colors hover:border-graphite-600 hover:text-ivory disabled:opacity-40"
+              >
+                <span>Reset progress</span>
+              </button>
+            </div>
           </div>
 
-          <textarea
-            id="studyNoteInput"
-            rows={3}
-            value={noteContent}
-            onChange={(e) => setNoteContent(e.target.value)}
-            placeholder="Write a study observation, test idea, or improvement suggestion..."
-            data-testid="study-note-input"
-            className="w-full border border-graphite-700 bg-obsidian-900 px-3 py-2 font-sans text-xs text-ivory placeholder:text-ash focus:border-graphite-600 focus:outline-none"
-          />
-
-          {noteError && (
-            <p className="font-mono text-xs text-terracotta">{noteError}</p>
-          )}
-
-          <div className="flex items-center justify-between gap-3">
-            <span className="font-mono text-[10px] text-ash">
-              Session log (`POST /api/study-notes`)
-            </span>
-            <button
-              type="submit"
-              disabled={isSavingNote}
-              data-testid="submit-study-note-btn"
-              className="border border-ivory bg-ivory px-4 py-1.5 font-mono text-xs font-medium text-obsidian-900 hover:bg-fillet disabled:opacity-60"
-            >
-              <span>{isSavingNote ? "Saving..." : "Save Entry"}</span>
-            </button>
+          <div
+            aria-hidden="true"
+            className="h-[2px] w-full bg-graphite-700/80"
+          >
+            <div
+              className="h-full bg-sage transition-[width] duration-200"
+              style={{ width: `${progressPct}%` }}
+            />
           </div>
-        </form>
+        </div>
 
-        <div className="space-y-2">
-          <p className="font-mono text-[10px] tracking-[0.2em] text-ash uppercase">
-            RECENT ENTRIES
-          </p>
-          {notesLoading ? (
-            <p className="font-mono text-xs text-ash">Loading notes...</p>
-          ) : (
-            <ul
-              data-testid="study-notes-list"
-              className="max-h-52 space-y-2 overflow-y-auto pr-1"
+        {/* 4 Curated Study Tracks */}
+        <div className="space-y-4">
+          {STUDY_TRACKS.map((track) => (
+            <section
+              key={track.code}
+              className="border border-graphite-700 bg-obsidian-950 p-4"
             >
-              {notes.map((n) => (
-                <li
-                  key={n.id}
-                  className="border border-graphite-700 bg-obsidian-950 px-3.5 py-2.5 text-xs"
-                >
-                  <div className="flex items-center justify-between font-mono text-[10px] text-ash">
-                    <span className="text-sage">{n.category}</span>
-                    <span>{n.createdAt.slice(0, 10)}</span>
-                  </div>
-                  <p className="mt-1 text-stone">{n.content}</p>
-                </li>
-              ))}
-            </ul>
-          )}
+              <div className="border-b border-graphite-700/70 pb-2.5">
+                <p className="font-mono text-[10px] tracking-[0.2em] text-sage uppercase">
+                  <span>{track.code}</span>
+                </p>
+                <div className="mt-0.5 flex flex-wrap items-baseline justify-between gap-2">
+                  <h3 className="font-serif text-base text-ivory">
+                    <span>{track.title}</span>
+                  </h3>
+                  <span className="font-mono text-[10px] text-ash">
+                    <span>{track.focus}</span>
+                  </span>
+                </div>
+              </div>
+
+              <ul className="mt-3 space-y-2.5">
+                {track.items.map((item) => {
+                  const isChecked = completedIds.includes(item.id);
+                  return (
+                    <li key={item.id}>
+                      <label className="group flex cursor-pointer items-start gap-3 rounded-[2px] p-1.5 transition-colors hover:bg-obsidian-900/70">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleTrackItem(item.id)}
+                          data-testid={`track-item-${item.id}`}
+                          className="peer sr-only"
+                        />
+                        <span
+                          aria-hidden="true"
+                          className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-sage ${
+                            isChecked
+                              ? "border-sage bg-sage text-obsidian-950"
+                              : "border-graphite-600 bg-obsidian-900 group-hover:border-stone"
+                          }`}
+                        >
+                          {isChecked && (
+                            <svg
+                              viewBox="0 0 12 12"
+                              fill="none"
+                              className="h-2.5 w-2.5"
+                            >
+                              <path
+                                d="M2.5 6.2L4.8 8.5L9.5 3.5"
+                                stroke="currentColor"
+                                strokeWidth="1.7"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
+                        </span>
+
+                        <span className="space-y-0.5">
+                          <span
+                            className={`block font-mono text-xs transition-colors ${
+                              isChecked
+                                ? "text-stone line-through decoration-ash/80"
+                                : "text-ivory"
+                            }`}
+                          >
+                            <span>{item.title}</span>
+                          </span>
+                          <span className="block text-xs leading-relaxed text-ash">
+                            <span>{item.detail}</span>
+                          </span>
+                        </span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
         </div>
       </div>
     );
@@ -306,7 +468,9 @@ export function CliffLabPanelContent({
             `111.111.111-11`.
           </li>
           <li>
-            <span className="text-ivory">2. Outage & Timeout (`500 / 504 / 429`):</span>{" "}
+            <span className="text-ivory">
+              2. Outage & Timeout (`500 / 504 / 429`):
+            </span>{" "}
             Trigger failures in Chaos Monkey and confirm zero phantom debits.
           </li>
           <li>
@@ -315,7 +479,8 @@ export function CliffLabPanelContent({
           </li>
           <li>
             <span className="text-ivory">4. UI Desync Bug Hunting:</span>{" "}
-            Enable `Stale Balance UI Desync` and compare header vs. `GET /api/account`.
+            Enable `Stale Balance UI Desync` and compare header vs. `GET
+            /api/account`.
           </li>
         </ul>
       </div>
