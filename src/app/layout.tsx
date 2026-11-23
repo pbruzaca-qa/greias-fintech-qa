@@ -3,7 +3,9 @@ import { Inter, JetBrains_Mono, Playfair_Display } from "next/font/google";
 import React from "react";
 import { ChaosMonkeyDrawer } from "@/components/ChaosMonkeyDrawer";
 import { EnvironmentProvider } from "@/components/EnvironmentProvider";
+import { QaUtilityBar } from "@/components/QaUtilityBar";
 import { SiteHeader } from "@/components/SiteHeader";
+import { StudyHubDrawer } from "@/components/StudyHubDrawer";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -42,8 +44,12 @@ export default function RootLayout({
     >
       <body className="flex min-h-screen flex-col bg-obsidian-950 font-sans text-ivory antialiased">
         <EnvironmentProvider>
-          <SiteHeader />
+          <div className="pointer-events-none sticky top-0 z-30">
+            <SiteHeader />
+            <QaUtilityBar />
+          </div>
           <main className="flex-1">{children}</main>
+          <StudyHubDrawer />
           <ChaosMonkeyDrawer />
         </EnvironmentProvider>
       </body>

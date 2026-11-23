@@ -306,7 +306,7 @@ export default function OpenAccountPage() {
         {/* Actions */}
         <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
           <Link
-            href="/bank"
+            href="/"
             className="border border-graphite-700 px-5 py-2.5 font-serif text-sm text-stone transition-colors hover:border-graphite-600 hover:text-ivory"
           >
             ← Back to Landing

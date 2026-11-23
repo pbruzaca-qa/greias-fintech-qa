@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { AccountSnapshot, ChaosConfig } from "@/lib/types";
@@ -31,6 +32,12 @@ interface EnvironmentContextValue {
   updateChaos: (patch: Partial<ChaosConfig>) => Promise<void>;
   setSnapshot: React.Dispatch<React.SetStateAction<AccountSnapshot | null>>;
   clearStatusBanner: () => void;
+  isStudyHubOpen: boolean;
+  setIsStudyHubOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  studyHubTriggerRef: React.RefObject<HTMLButtonElement>;
+  isChaosOpen: boolean;
+  setIsChaosOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  chaosTriggerRef: React.RefObject<HTMLButtonElement>;
 }
 
 const EnvironmentContext = createContext<EnvironmentContextValue | null>(null);
@@ -45,6 +52,12 @@ export function EnvironmentProvider({
   const [isLoading, setIsLoading] = useState(true);
   const [isResetting, setIsResetting] = useState(false);
   const [statusBanner, setStatusBanner] = useState<string | null>(null);
+
+  const [isStudyHubOpen, setIsStudyHubOpen] = useState(false);
+  const studyHubTriggerRef = useRef<HTMLButtonElement>(null);
+
+  const [isChaosOpen, setIsChaosOpen] = useState(false);
+  const chaosTriggerRef = useRef<HTMLButtonElement>(null);
 
   const refreshChaos = useCallback(async () => {
     try {
@@ -179,6 +192,12 @@ export function EnvironmentProvider({
         updateChaos,
         setSnapshot,
         clearStatusBanner,
+        isStudyHubOpen,
+        setIsStudyHubOpen,
+        studyHubTriggerRef,
+        isChaosOpen,
+        setIsChaosOpen,
+        chaosTriggerRef,
       }}
     >
       {children}
