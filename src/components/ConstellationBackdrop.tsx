@@ -119,6 +119,23 @@ export function ConstellationBackdrop() {
             strokeLinecap="round"
             strokeDasharray="8 7 3 8"
           />
+          {/* Left arm (δ → μ → λ) */}
+          <path
+            d="M577 375L505 367"
+            stroke="#8E8B85"
+            strokeOpacity="0.1"
+            strokeWidth="0.45"
+            strokeLinecap="round"
+            strokeDasharray="8 9 3 8"
+          />
+          <path
+            d="M497 357L511 319"
+            stroke="#8E8B85"
+            strokeOpacity="0.09"
+            strokeWidth="0.45"
+            strokeLinecap="round"
+            strokeDasharray="6 8"
+          />
           <path
             d="M585 388L536 576"
             stroke="#8E8B85"
@@ -186,6 +203,8 @@ export function ConstellationBackdrop() {
           <circle cx="722" cy="313" r="1.45" fill="#D8D4CC" opacity="0.42" />
           <circle cx="840" cy="304" r="1.35" fill="#A6A29A" opacity="0.38" />
           <circle cx="588" cy="376" r="1.65" fill="#D8D4CC" opacity="0.46" />
+          <circle cx="494" cy="366" r="1.5" fill="#D8D4CC" opacity="0.42" />
+          <circle cx="514" cy="310" r="1.35" fill="#A6A29A" opacity="0.38" />
           <circle cx="739" cy="439" r="1.35" fill="#A6A29A" opacity="0.38" />
           <circle cx="760" cy="556" r="2.2" fill="#F2EFE9" opacity="0.56" />
           <circle cx="533" cy="590" r="1.8" fill="#D8D4CC" opacity="0.48" />

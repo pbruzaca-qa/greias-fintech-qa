@@ -29,7 +29,7 @@ const CARD_FIELD_STARS: Array<{
   { cx: 168, cy: 196, r: 0.75, fill: "#A6A29A", opacity: 0.38 },
   { cx: 196, cy: 214, r: 0.65, fill: "#8E8B85", opacity: 0.34 },
   { cx: 184, cy: 46, r: 0.8, fill: "#A6A29A", opacity: 0.42 },
-  { cx: 216, cy: 92, r: 0.7, fill: "#8E8B85", opacity: 0.38 },
+  { cx: 188, cy: 108, r: 0.7, fill: "#8E8B85", opacity: 0.38 },
   { cx: 204, cy: 148, r: 0.8, fill: "#D8D4CC", opacity: 0.44 },
 
   // Right field around the Perseus constellation
@@ -168,6 +168,23 @@ export function GreiasCardVisual({
             strokeLinecap="round"
             strokeDasharray="2.5 3"
           />
+          {/* Left arm (δ → μ → λ) */}
+          <path
+            d="M86 74L71 72"
+            stroke="#A6A29A"
+            strokeOpacity="0.21"
+            strokeWidth="0.35"
+            strokeLinecap="round"
+            strokeDasharray="2.5 3"
+          />
+          <path
+            d="M68 68L71 61"
+            stroke="#A6A29A"
+            strokeOpacity="0.19"
+            strokeWidth="0.35"
+            strokeLinecap="round"
+            strokeDasharray="2 2.5"
+          />
           <path
             d="M89 78L78 120"
             stroke="#A6A29A"
@@ -234,6 +251,8 @@ export function GreiasCardVisual({
           <circle cx="122" cy="59" r="1.1" fill="#D8D4CC" />
           <circle cx="150" cy="57" r="1.05" fill="#A6A29A" />
           <circle cx="90" cy="74" r="1.3" fill="url(#greias-card-star-metal)" />
+          <circle cx="67" cy="72" r="1.15" fill="url(#greias-card-star-metal)" />
+          <circle cx="72" cy="58" r="1.05" fill="#A6A29A" />
           <circle cx="126" cy="89" r="1.1" fill="#D8D4CC" />
           <circle cx="131" cy="117" r="1.85" fill="url(#greias-card-star-metal)" />
           <circle cx="77" cy="125" r="1.4" fill="url(#greias-card-star-metal)" />
