@@ -25,8 +25,8 @@ const PILLARS = [
 
 export default function LandingPage() {
   return (
-    <div className="flex min-h-[calc(100vh-96px)] flex-col justify-between bg-obsidian-950">
-      <section className="relative overflow-hidden border-b border-graphite-700/70 bg-gradient-to-b from-obsidian-950 via-obsidian-950 to-obsidian-950">
+    <div className="flex min-h-[calc(100vh-96px)] flex-col justify-between">
+      <section className="relative overflow-hidden border-b border-graphite-700/70">
         <div className="mx-auto grid max-w-[1360px] grid-cols-1 items-center gap-12 px-4 pt-8 pb-14 sm:px-8 lg:grid-cols-12 lg:pt-12 lg:pb-16">
           <div className="space-y-7 lg:col-span-6">
             <p className="font-mono text-[11px] tracking-[0.34em] text-ash uppercase">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Playfair_Display } from "next/font/google";
 import React from "react";
 import { ChaosMonkeyDrawer } from "@/components/ChaosMonkeyDrawer";
+import { ConstellationBackdrop } from "@/components/ConstellationBackdrop";
 import { EnvironmentProvider } from "@/components/EnvironmentProvider";
 import { QaUtilityBar } from "@/components/QaUtilityBar";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -43,12 +44,13 @@ export default function RootLayout({
       className={`${playfair.variable} ${inter.variable} ${jetbrainsMono.variable}`}
     >
       <body className="flex min-h-screen flex-col bg-obsidian-950 font-sans text-ivory antialiased">
+        <ConstellationBackdrop />
         <EnvironmentProvider>
           <div className="pointer-events-none sticky top-0 z-30">
             <SiteHeader />
             <QaUtilityBar />
           </div>
-          <main className="flex-1">{children}</main>
+          <main className="relative z-10 flex-1">{children}</main>
           <StudyHubDrawer />
           <ChaosMonkeyDrawer />
         </EnvironmentProvider>

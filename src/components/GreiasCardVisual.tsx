@@ -12,6 +12,40 @@ interface GreiasCardVisualProps {
   showCvvSlot?: boolean;
 }
 
+const CARD_FIELD_STARS: Array<{
+  cx: number;
+  cy: number;
+  r: number;
+  fill: string;
+  opacity: number;
+}> = [
+  // Left & upper-center spread (keeping logo, chip, and PAN area uncluttered)
+  { cx: 34, cy: 62, r: 0.65, fill: "#8E8B85", opacity: 0.36 },
+  { cx: 78, cy: 48, r: 0.75, fill: "#A6A29A", opacity: 0.4 },
+  { cx: 122, cy: 34, r: 0.7, fill: "#8E8B85", opacity: 0.38 },
+  { cx: 148, cy: 76, r: 0.85, fill: "#D8D4CC", opacity: 0.44 },
+  { cx: 134, cy: 132, r: 0.7, fill: "#8E8B85", opacity: 0.36 },
+  { cx: 28, cy: 156, r: 0.65, fill: "#8E8B85", opacity: 0.34 },
+  { cx: 168, cy: 196, r: 0.75, fill: "#A6A29A", opacity: 0.38 },
+  { cx: 196, cy: 214, r: 0.65, fill: "#8E8B85", opacity: 0.34 },
+  { cx: 184, cy: 46, r: 0.8, fill: "#A6A29A", opacity: 0.42 },
+  { cx: 216, cy: 92, r: 0.7, fill: "#8E8B85", opacity: 0.38 },
+  { cx: 204, cy: 148, r: 0.8, fill: "#D8D4CC", opacity: 0.44 },
+
+  // Right field around the Perseus constellation
+  { cx: 238, cy: 38, r: 0.75, fill: "#A6A29A", opacity: 0.42 },
+  { cx: 256, cy: 124, r: 0.7, fill: "#8E8B85", opacity: 0.4 },
+  { cx: 236, cy: 186, r: 0.8, fill: "#A6A29A", opacity: 0.44 },
+  { cx: 274, cy: 218, r: 0.7, fill: "#8E8B85", opacity: 0.38 },
+  { cx: 308, cy: 42, r: 0.85, fill: "#D8D4CC", opacity: 0.48 },
+  { cx: 326, cy: 114, r: 0.75, fill: "#A6A29A", opacity: 0.44 },
+  { cx: 318, cy: 164, r: 0.7, fill: "#8E8B85", opacity: 0.42 },
+  { cx: 344, cy: 204, r: 0.85, fill: "#D8D4CC", opacity: 0.46 },
+  { cx: 356, cy: 58, r: 0.75, fill: "#A6A29A", opacity: 0.44 },
+  { cx: 352, cy: 138, r: 0.8, fill: "#D8D4CC", opacity: 0.48 },
+  { cx: 294, cy: 192, r: 0.65, fill: "#8E8B85", opacity: 0.38 },
+];
+
 export function GreiasCardVisual({
   holderName = "PERSEU B.",
   last4 = "4821",
@@ -54,6 +88,10 @@ export function GreiasCardVisual({
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 rounded-xl border border-fillet/20"
+          style={{
+            background:
+              "linear-gradient(120deg, rgba(242,239,233,0.025) 0%, transparent 40%, rgba(10,10,10,0.2) 100%)",
+          }}
         />
 
         {status === "FROZEN" && (
@@ -67,44 +105,140 @@ export function GreiasCardVisual({
           </div>
         )}
 
+        {/* Full-card visible small scattered stars */}
+        <svg
+          viewBox="0 0 380 240"
+          fill="none"
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full"
+        >
+          {CARD_FIELD_STARS.map((star, index) => (
+            <circle
+              key={index}
+              cx={star.cx}
+              cy={star.cy}
+              r={star.r}
+              fill={star.fill}
+              opacity={star.opacity}
+            />
+          ))}
+        </svg>
+
+        {/* Perseus Constellation highlight with ultra-thin broken guide lines */}
         <svg
           viewBox="0 0 220 180"
           fill="none"
           aria-hidden="true"
-          className="pointer-events-none absolute right-2 top-5 h-[78%] w-[52%] opacity-75"
+          className="pointer-events-none absolute right-2 top-4 h-[82%] w-[56%] opacity-80"
         >
+          <defs>
+            <radialGradient id="greias-card-star-metal" cx="35%" cy="32%" r="68%">
+              <stop offset="0%" stopColor="#F2EFE9" />
+              <stop offset="55%" stopColor="#D8D4CC" />
+              <stop offset="100%" stopColor="#73706A" />
+            </radialGradient>
+            <radialGradient id="greias-card-star-halo" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#F2EFE9" stopOpacity="0.24" />
+              <stop offset="55%" stopColor="#D8D4CC" stopOpacity="0.07" />
+              <stop offset="100%" stopColor="#8E8B85" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+
           <path
-            d="M42 26L76 42L96 68L128 84L142 114L168 156"
-            stroke="#8E8B85"
-            strokeOpacity="0.45"
-            strokeWidth="0.9"
+            d="M130 19L121 32"
+            stroke="#A6A29A"
+            strokeOpacity="0.22"
+            strokeWidth="0.35"
+            strokeLinecap="round"
+            strokeDasharray="2.5 3.5"
           />
           <path
-            d="M96 68L102 104L74 128"
-            stroke="#8E8B85"
-            strokeOpacity="0.4"
-            strokeWidth="0.9"
+            d="M117 39L109 54"
+            stroke="#A6A29A"
+            strokeOpacity="0.25"
+            strokeWidth="0.35"
+            strokeLinecap="round"
+            strokeDasharray="3.5 3 1.5 3.5"
           />
           <path
-            d="M128 84L146 92L142 114"
-            stroke="#8E8B85"
-            strokeOpacity="0.35"
-            strokeWidth="0.8"
+            d="M104 61L93 71"
+            stroke="#A6A29A"
+            strokeOpacity="0.22"
+            strokeWidth="0.35"
+            strokeLinecap="round"
+            strokeDasharray="2.5 3"
           />
-          <circle cx="42" cy="26" r="1.2" fill="#D8D4CC" />
-          <circle cx="76" cy="42" r="1.4" fill="#D8D4CC" />
-          <circle cx="96" cy="68" r="2" fill="#F2EFE9" />
-          <circle cx="128" cy="84" r="1.4" fill="#D8D4CC" />
-          <circle cx="146" cy="92" r="1.1" fill="#A6A29A" />
-          <circle cx="102" cy="104" r="1.5" fill="#D8D4CC" />
-          <circle cx="74" cy="128" r="1.3" fill="#A6A29A" />
-          <circle cx="142" cy="114" r="1.5" fill="#D8D4CC" />
-          <circle cx="156" cy="134" r="2.2" fill="#F2EFE9" />
-          <circle cx="168" cy="156" r="1.3" fill="#A6A29A" />
-          <circle cx="58" cy="66" r="0.7" fill="#73706A" />
-          <circle cx="170" cy="48" r="0.7" fill="#73706A" />
-          <circle cx="188" cy="96" r="0.8" fill="#8E8B85" />
-          <circle cx="122" cy="144" r="0.7" fill="#73706A" />
+          <path
+            d="M89 78L78 120"
+            stroke="#A6A29A"
+            strokeOpacity="0.24"
+            strokeWidth="0.35"
+            strokeLinecap="round"
+            strokeDasharray="4 3.5 2 4"
+          />
+          <path
+            d="M77 129L74 147"
+            stroke="#A6A29A"
+            strokeOpacity="0.22"
+            strokeWidth="0.35"
+            strokeLinecap="round"
+            strokeDasharray="3 3.5"
+          />
+          <path
+            d="M75 155L80 165"
+            stroke="#A6A29A"
+            strokeOpacity="0.2"
+            strokeWidth="0.35"
+            strokeLinecap="round"
+            strokeDasharray="2 3"
+          />
+          <path
+            d="M111 58L119 59"
+            stroke="#A6A29A"
+            strokeOpacity="0.2"
+            strokeWidth="0.35"
+            strokeLinecap="round"
+            strokeDasharray="2 2.5"
+          />
+          <path
+            d="M126 59L146 57"
+            stroke="#A6A29A"
+            strokeOpacity="0.18"
+            strokeWidth="0.35"
+            strokeLinecap="round"
+            strokeDasharray="3 4"
+          />
+          <path
+            d="M123 63L126 85"
+            stroke="#A6A29A"
+            strokeOpacity="0.24"
+            strokeWidth="0.35"
+            strokeLinecap="round"
+            strokeDasharray="3 3.5 1.5 3"
+          />
+          <path
+            d="M127 93L130 112"
+            stroke="#A6A29A"
+            strokeOpacity="0.24"
+            strokeWidth="0.35"
+            strokeLinecap="round"
+            strokeDasharray="3 3.5"
+          />
+
+          <circle cx="107" cy="58" r="5" fill="url(#greias-card-star-halo)" />
+          <circle cx="131" cy="117" r="4.5" fill="url(#greias-card-star-halo)" />
+
+          <circle cx="132" cy="16" r="1.15" fill="url(#greias-card-star-metal)" />
+          <circle cx="119" cy="35" r="1.25" fill="url(#greias-card-star-metal)" />
+          <circle cx="107" cy="58" r="2.0" fill="url(#greias-card-star-metal)" />
+          <circle cx="122" cy="59" r="1.1" fill="#D8D4CC" />
+          <circle cx="150" cy="57" r="1.05" fill="#A6A29A" />
+          <circle cx="90" cy="74" r="1.3" fill="url(#greias-card-star-metal)" />
+          <circle cx="126" cy="89" r="1.1" fill="#D8D4CC" />
+          <circle cx="131" cy="117" r="1.85" fill="url(#greias-card-star-metal)" />
+          <circle cx="77" cy="125" r="1.4" fill="url(#greias-card-star-metal)" />
+          <circle cx="74" cy="151" r="1.2" fill="url(#greias-card-star-metal)" />
+          <circle cx="81" cy="168" r="1.35" fill="url(#greias-card-star-metal)" />
         </svg>
 
         <div className="relative z-10 flex h-full flex-col justify-between">
