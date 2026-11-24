@@ -35,6 +35,21 @@ export const metadata: Metadata = {
   },
   description:
     "A fully simulated digital bank built for real-world fintech QA practice, API testing, and chaos engineering drills.",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://greias-fintech-qa.vercel.app",
+    siteName: "GRÉIAS",
+    title: "GRÉIAS — Simulated Digital Bank for Fintech QA",
+    description:
+      "A fully simulated digital bank built for real-world fintech QA practice, API testing, and chaos engineering drills.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GRÉIAS — Simulated Digital Bank for Fintech QA",
+    description:
+      "A fully simulated digital bank built for real-world fintech QA practice, API testing, and chaos engineering drills.",
+  },
 };
 
 export default function RootLayout({
