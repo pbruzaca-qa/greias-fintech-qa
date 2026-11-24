@@ -5,6 +5,7 @@ import { ChaosMonkeyDrawer } from "@/components/ChaosMonkeyDrawer";
 import { ConstellationBackdrop } from "@/components/ConstellationBackdrop";
 import { EnvironmentProvider } from "@/components/EnvironmentProvider";
 import { QaUtilityBar } from "@/components/QaUtilityBar";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StudyHubDrawer } from "@/components/StudyHubDrawer";
 import "./globals.css";
@@ -13,6 +14,7 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-serif",
   weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
 });
 
 const inter = Inter({
@@ -70,6 +72,7 @@ export default function RootLayout({
             <QaUtilityBar />
           </div>
           <main className="relative z-10 flex-1">{children}</main>
+          <SiteFooter />
           <StudyHubDrawer />
           <ChaosMonkeyDrawer />
         </EnvironmentProvider>
