@@ -28,9 +28,13 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GRÉIAS — Simulated Digital Bank for Fintech QA",
+  metadataBase: new URL("https://greias-fintech-qa.vercel.app"),
+  title: {
+    default: "GRÉIAS — Simulated Digital Bank for Fintech QA",
+    template: "%s | GRÉIAS",
+  },
   description:
-    "A fully simulated digital bank built for real-world fintech QA practice. Educational environment. All operations are fictional.",
+    "A fully simulated digital bank built for real-world fintech QA practice, API testing, and chaos engineering drills.",
 };
 
 export default function RootLayout({
